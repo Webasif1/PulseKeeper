@@ -1,0 +1,17 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    globals: false,
+    include: ['src/**/*.test.ts', 'src/__tests__/**/*.test.ts'],
+    // Loaded before any module reads process.env, so the environment schema
+    // validates without a real .env file present.
+    setupFiles: ['./src/__tests__/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.test.ts', 'src/__tests__/**', 'src/server.ts'],
+    },
+  },
+});
