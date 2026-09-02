@@ -182,7 +182,7 @@ cp client/.env.example client/.env
 npm run seed
 
 # 5. Run both apps
-npm run dev                        # API on :5000, dashboard on :5173
+npm run dev                        # API on :5050, dashboard on :5173
 ```
 
 Other scripts: `npm run build`, `npm run typecheck`, `npm run lint`, `npm test`,
@@ -208,7 +208,7 @@ is ever exposed to the frontend bundle.
 | Variable | Purpose |
 | --- | --- |
 | `NODE_ENV` | `development` / `production` |
-| `PORT` | API port (default `5000`) |
+| `PORT` | API port (default `5050` — 5000 is reserved on Windows and macOS) |
 | `MONGODB_URI` | MongoDB connection string |
 | `JWT_SECRET` | Signing secret for auth tokens — required, no default |
 | `JWT_EXPIRES_IN` | Token lifetime (default `7d`) |
@@ -221,7 +221,7 @@ is ever exposed to the frontend bundle.
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_API_URL` | Base URL of the API (default `http://localhost:5000`) |
+| `VITE_API_URL` | Base URL of the API (default `http://localhost:5050`) |
 
 `MONGODB_URI`, `JWT_SECRET`, and `MONITOR_CRON_SECRET` must never be referenced by client code.
 

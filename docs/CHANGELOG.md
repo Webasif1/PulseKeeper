@@ -11,6 +11,10 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Backend foundation: Express 5 + TypeScript API with Zod-validated environment configuration,
+  MongoDB connection handling, pino structured logging, the shared success/error response
+  envelope, typed application errors, request tracing via `x-request-id`, rate limiting, Helmet,
+  a CORS origin allowlist, graceful shutdown, and `GET /api/health` plus `/api/health/ready`.
 - Repository scaffold: npm workspaces root, Docker-based local MongoDB, `.gitignore`,
   `.editorconfig`, `.nvmrc`.
 - Project documentation: `README.md`, `docs/ARCHITECTURE.md`, `docs/DEVLOG.md`, this changelog,

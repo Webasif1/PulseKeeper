@@ -16,7 +16,7 @@ npm install
 npm run db:up                       # local MongoDB via Docker
 cp server/.env.example server/.env
 cp client/.env.example client/.env
-npm run dev                         # API :5000, client :5173
+npm run dev                         # API :5050, client :5173
 ```
 
 If you cannot run Docker, point `MONGODB_URI` at a MongoDB Atlas cluster instead.

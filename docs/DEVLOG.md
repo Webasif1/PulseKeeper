@@ -8,6 +8,75 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 1 — Backend foundation
+
+**Date:** 2026-09-02 · **Branch:** `feat/server-foundation`
+
+### What landed
+
+- Express 5 + TypeScript workspace on ESM (`NodeNext`), with `tsx` for development, a separate
+  `tsconfig.build.json` that excludes tests from the build, ESLint 9 flat config, and Vitest.
+- `config/env.ts` — Zod-validated environment parsed once at import. Invalid configuration prints
+  the offending variables and exits non-zero instead of failing later at an arbitrary request.
+- `config/db.ts` — MongoDB connection with a 10s server-selection timeout, pooling, connection
+  event logging, and helpers reporting the connection state.
+- `utils/logger.ts` — pino, pretty in development and JSON elsewhere, with redaction covering
+  cookies, authorization headers, passwords, tokens, and the three secrets.
+- `utils/apiResponse.ts` — the SPEC §44 envelope plus pagination helpers.
+  `utils/AppError.ts` — typed error codes and constructors. `utils/asyncHandler.ts`.
+- Middleware: request logging with a traced `x-request-id`, a terminal error handler,
+  a 404 handler, and four rate limiters (global, auth, register, manual check).
+- `app.ts` / `server.ts` split, `GET /api/health` (liveness) and `/api/health/ready` (readiness),
+  and graceful shutdown on SIGINT/SIGTERM with a 10s force-exit guard.
+- Ten integration tests covering the envelope, tracing, CORS, helmet headers, and readiness.
+
+### Decisions
+
+- **The environment schema is the boot gate.** A production deployment cannot start with a
+  missing `MONITOR_CRON_SECRET` or a `JWT_SECRET` still holding the example value, because
+  `superRefine` rejects both. Misconfiguration surfaces at deploy time, not at 3am.
+- **CORS uses an explicit allowlist, never a reflected origin.** Authentication is cookie-based,
+  so reflecting the request origin would let any site drive the API as the signed-in user.
+  Requests with no `Origin` (curl, external cron) are allowed — they carry no ambient cookie
+  authority.
+- **Liveness and readiness are separate endpoints.** Liveness stays 200 while MongoDB is
+  unreachable so a platform health check does not recycle the container over a transient blip;
+  readiness returns 503 so load balancers route around an instance that genuinely cannot serve.
+- **Errors are normalised in one place.** Zod, Mongoose validation and cast errors, duplicate-key
+  violations, and malformed JSON all become the same envelope. Unexpected errors are logged in
+  full but reported generically, so stack traces and driver messages never reach a client.
+- **`console.log` is a lint error.** Everything goes through the pino logger, which keeps
+  redaction in a single place. `config/env.ts` is the sole exception, since it reports failures
+  before the logger exists.
+- **Rate limiters are skipped under `NODE_ENV=test`** so the suite can fire many requests without
+  tripping limits it is not testing.
+
+### Fixed during verification
+
+- **Default port moved from 5000 to 5050.** Starting the server produced
+  `EACCES ... listen 0.0.0.0:5000`; `netsh int ipv4 show excludedportrange` confirmed Windows
+  reserves port 5000 in its Hyper-V excluded range. macOS binds the same port to the AirPlay
+  receiver. Keeping 5000 would have made "clone and run" fail for a large share of contributors
+  on both platforms.
+- `mongoose.connection.readyState` can be `99` ("uninitialized"), which does not fit a
+  four-element tuple; the state lookup is a `Record<number, string>` instead.
+
+### Verified
+
+`typecheck`, `lint`, `test` (10 passing), and `build` all clean. Live smoke test against the
+Docker MongoDB: database connected, `/api/health` and `/api/health/ready` returned the success
+envelope, an unknown route returned `NOT_FOUND`, a request from a non-allowlisted origin was
+refused with 403, and responses carried `x-request-id`, `nosniff`, and `RateLimit` headers with
+no `x-powered-by`.
+
+### Deferred
+
+- Authentication middleware and models arrive in Phase 2; the `JWT_*` variables are defined now
+  so the configuration surface is documented in one pass.
+- `docs/API.md` and `docs/CONFIGURATION.md` are written once there are endpoints beyond health.
+
+---
+
 ## Phase 0 — Repository scaffold
 
 **Date:** 2026-09-02 · **Branch:** `chore/repo-scaffold`
