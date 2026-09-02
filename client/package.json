@@ -1,0 +1,8 @@
+{
+  "name": "@pulsekeeper/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PulseKeeper frontend: React + Vite monitoring dashboard.",
+  "license": "MIT",
+  "type": "module"
+}

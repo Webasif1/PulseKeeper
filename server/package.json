@@ -1,0 +1,9 @@
+{
+  "name": "@pulsekeeper/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PulseKeeper backend: Express REST API, monitoring engine, and scheduled jobs.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/server.js"
+}
