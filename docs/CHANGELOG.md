@@ -11,6 +11,13 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Data model: `User`, `Site`, `HealthCheck`, `Incident`, `Notification`, `Settings`, and
+  `MonitorRun` schemas with the indexes the dashboard, scheduler, and analytics queries depend on,
+  including a partial unique index that permits only one active incident per site.
+- Authentication: registration, login, logout, and current-user endpoints; bcrypt hashing in a
+  model hook; JWT with pinned algorithm, issuer, and audience, delivered as an HTTP-only cookie
+  with a bearer-token fallback for non-browser clients; `requireAuth` middleware; Zod request
+  validation.
 - Backend foundation: Express 5 + TypeScript API with Zod-validated environment configuration,
   MongoDB connection handling, pino structured logging, the shared success/error response
   envelope, typed application errors, request tracing via `x-request-id`, rate limiting, Helmet,

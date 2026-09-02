@@ -8,6 +8,81 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 2 — Data model and authentication
+
+**Date:** 2026-09-02 · **Branch:** `feat/auth`
+
+### What landed
+
+- Seven Mongoose models with their indexes: `User`, `Site`, `HealthCheck`, `Incident`,
+  `Notification`, `Settings`, and `MonitorRun`.
+- Shared domain vocabulary in `types/domain.ts` (site statuses, check error types, check sources,
+  incident statuses, notification types, themes) and monitoring defaults and bounds in
+  `constants/monitoring.ts`, so no threshold is written as a literal anywhere else.
+- JWT signing and verification with pinned algorithm, issuer, and audience; cookie helpers;
+  `requireAuth` accepting an HTTP-only cookie or a bearer token; a `validate` middleware driven by
+  Zod schemas.
+- `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`,
+  `GET /api/auth/me`, with the auth and registration rate limiters applied.
+- 42 new tests (52 total): the full auth flow, model defaults and constraints, and JWT hardening.
+
+### Decisions
+
+- **Password hashing is a model hook, not service code.** Any future path that writes a
+  password — a reset flow, an admin tool, a seed script — is hashed by construction. Forgetting is
+  not possible.
+- **`password` is `select: false`.** A forgotten projection cannot leak a hash into a response.
+  Login is the one place that opts back in with `.select('+password')`.
+- **Login never distinguishes a wrong password from an unknown account.** Both return
+  `Invalid email or password`, so the endpoint cannot enumerate registered addresses. Registration
+  is necessarily direct about a duplicate email, since the account cannot be created either way.
+- **The password ceiling is 72 characters** because bcrypt silently ignores input beyond 72 bytes.
+  Accepting more would make part of a user's password meaningless.
+- **`requireAuth` re-reads the user on every request** rather than trusting the token body, so a
+  deleted account stops working immediately instead of at token expiry. There is a test for it.
+- **JWT verification pins `algorithms: ['HS256']` plus issuer and audience.** That defeats the
+  `alg: none` downgrade and cross-service token reuse; both are covered by tests.
+- **`validate` writes to `req.validated`, not `req.body`/`req.query`.** Express 5 exposes
+  `req.query` as a getter and assigning to it throws. The side effect is useful: a route that
+  forgets validation cannot accidentally read coerced input.
+- **One active incident per site is a database constraint**, not service logic — a partial unique
+  index on `{ siteId }` filtered to `status: ACTIVE`. A manual check racing the cron sweep cannot
+  open duplicates for the same outage.
+- **`bcryptjs` rather than `bcrypt`.** The native package needs prebuilt binaries that do not
+  exist for every Node and platform combination, and falls back to compiling with node-gyp. For an
+  open-source project where `npm install` must simply work, a pure-JS implementation of the same
+  algorithm is the better trade; the cost is roughly 100ms per hash at cost factor 12.
+- **`Site` caches current status while `HealthCheck` keeps history.** The dashboard would
+  otherwise run an aggregation per site on every poll. Uptime shown on detail pages is still
+  computed from history.
+- **`HealthCheck` denormalises `userId`** so user-scoped analytics never need a join to `sites`.
+- **`MonitorRun` holds no `userId`.** It records aggregate counters only — never site names, URLs,
+  or ids — so exposing it to any signed-in user reveals nothing about anyone else's sites. This is
+  instance telemetry, closer to a server log than to user data.
+
+### Decided against
+
+- **`mongodb-memory-server` for tests.** Tests run against a real MongoDB instead: Docker locally,
+  a service container in CI. Partial unique indexes, text indexes, and aggregation pipelines are
+  exactly what this application depends on, and an approximation would let real bugs through. It
+  also avoids a large binary download on every fresh environment. `npm test` therefore needs
+  `npm run db:up` first, which CONTRIBUTING already tells contributors to run.
+
+### Fixed during verification
+
+- **`errors` is a reserved Mongoose path.** `MonitorRun.errors` triggered a reserved-key warning
+  and would have shadowed the document's validation-error container. The field is stored as
+  `errorCount`; the API serialises it back to `errors` to match SPEC §40.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 52 tests passing against MongoDB 7. Live smoke test: register
+returned 201 with an `HttpOnly; SameSite=Lax` cookie, `/me` resolved the user from that cookie and
+401'd without it, a wrong password and an unknown account returned byte-identical responses, a
+duplicate registration returned 409, and an invalid payload returned three field-level messages.
+
+---
+
 ## Phase 1 — Backend foundation
 
 **Date:** 2026-09-02 · **Branch:** `feat/server-foundation`
