@@ -120,11 +120,12 @@ export interface Settings {
   theme: ThemePreference;
 }
 
+/** `null` means the window held no checks — not 0%, which is a total outage. */
 export interface UptimeWindows {
-  '24h': number;
-  '7d': number;
-  '30d': number;
-  '90d': number;
+  '24h': number | null;
+  '7d': number | null;
+  '30d': number | null;
+  '90d': number | null;
 }
 
 export interface ResponseTimePoint {

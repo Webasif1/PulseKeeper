@@ -89,10 +89,24 @@ describe('calculateUptimeWindows', () => {
     expect(uptime['30d']).toBe(50);
   });
 
-  it('reports zero when a window holds no checks', async () => {
+  it('reports null when a window holds no checks', async () => {
     const uptime = await calculateUptimeWindows({ siteId }, NOW);
 
-    expect(uptime).toEqual({ '24h': 0, '7d': 0, '30d': 0, '90d': 0 });
+    // null, not 0: an empty window is not a total outage.
+    expect(uptime).toEqual({ '24h': null, '7d': null, '30d': null, '90d': null });
+  });
+
+  it('distinguishes an empty window from a site that was down throughout', async () => {
+    await seedCheck({ at: hoursAgo(1), success: false });
+    await seedCheck({ at: hoursAgo(2), success: false });
+
+    const uptime = await calculateUptimeWindows({ siteId }, NOW);
+
+    // Down for every check in the last day is genuinely 0%; the 90-day window
+    // beyond those checks still has data, so it is 0 too. Only a window with
+    // no checks at all is null.
+    expect(uptime['24h']).toBe(0);
+    expect(uptime['90d']).toBe(0);
   });
 
   it('does not count checks older than the widest window', async () => {

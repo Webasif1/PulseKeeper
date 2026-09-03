@@ -21,11 +21,18 @@ import { IncidentStatus, SiteStatus } from '../types/domain.js';
  *     be slower and would scale with history rather than with the answer.
  */
 
+/**
+ * Uptime per window.
+ *
+ * `null` means the window contained no checks, which is not the same as 0%.
+ * A site that was down for a whole day genuinely is at 0%, and reporting both
+ * cases as the same number would either hide a total outage or invent one.
+ */
 export interface UptimeWindows {
-  '24h': number;
-  '7d': number;
-  '30d': number;
-  '90d': number;
+  '24h': number | null;
+  '7d': number | null;
+  '30d': number | null;
+  '90d': number | null;
 }
 
 export interface ResponseTimePoint {
@@ -114,9 +121,8 @@ export async function calculateUptimeWindows(
 
   for (const window of UPTIME_WINDOWS) {
     const bucket = (result?.[window] as Array<{ total: number; successful: number }>)?.[0];
-    uptime[window] = bucket && bucket.total > 0
-      ? round2((bucket.successful / bucket.total) * 100)
-      : 0;
+    uptime[window] =
+      bucket && bucket.total > 0 ? round2((bucket.successful / bucket.total) * 100) : null;
   }
 
   return uptime;
