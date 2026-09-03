@@ -8,6 +8,85 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 10 — Accessibility, deployment, and v0.1.0
+
+**Date:** 2026-09-04 · **Branch:** `chore/polish-docs-deploy`
+
+### What landed
+
+- A measured accessibility audit, and a palette correction that came out of it.
+- Deployment configuration: `client/vercel.json`, `render.yaml`, Dockerfiles for both workspaces,
+  an nginx config, and `.dockerignore`.
+- `docs/CONFIGURATION.md` and `docs/DEPLOYMENT.md`, completing the documentation set.
+- Final README with a documentation index; `docs/CHANGELOG.md` cut as 0.1.0.
+
+### The contrast failure
+
+The audit worth reporting is the one that found something. Converting every theme token from OKLCH
+to sRGB and computing WCAG ratios against the card surface gave, in the light theme:
+
+| Token | Ratio | Verdict |
+| --- | --- | --- |
+| `online` | 2.50:1 | fails |
+| `slow` | 2.19:1 | fails |
+| `offline` | 3.88:1 | large text only |
+| `brand-500` | 3.86:1 | large text only |
+
+AA requires 4.5:1 for body text. These colours are used as text — "Online", "Slow", the counts in
+the monitoring log, every link — so the most important words in the product were below the
+threshold, two of them badly. The dark theme was already fine, which is exactly why this was easy
+to miss by eye.
+
+Each light-theme value is now the **lightest** that clears 4.5:1 against both white and its own
+soft badge tint, found by search rather than guesswork, so the colours stay as saturated as
+accessibility allows. The dark theme overrides them back to the brighter versions, which measure
+7.10:1, 8.08:1, and 4.56:1 on the dark surface — the darker values would only make them muddy
+there for no gain.
+
+Every token now passes AA in both themes, including status text on its badge tint (4.51–4.57:1)
+and white on the primary and danger button fills (5.22:1 and 5.48:1).
+
+### Decisions
+
+- **Two Dockerfiles, both built from the repository root**, because the npm workspace has to
+  resolve. The API image runs as the unprivileged `node` user and its healthcheck uses
+  `/api/health/ready`, so a container that cannot reach its database reports unhealthy rather than
+  merely running.
+- **The SPA rewrite is in both the Vercel config and the nginx config.** Without it a refresh on
+  `/sites/:id` returns a 404 from the CDN or the web server before React ever loads — the single
+  most common way a client-routed app breaks in production.
+- **`VITE_API_URL` is a Docker build argument, not a runtime variable.** Vite inlines it into the
+  bundle, so it cannot be changed without rebuilding, and pretending otherwise would mislead
+  whoever deploys it.
+- **Render's health check path is `/api/health`, not `/api/health/ready`.** Liveness stays 200
+  while MongoDB is briefly unreachable, so a transient database blip does not cause Render to
+  recycle a container that is otherwise healthy. The Docker healthcheck uses readiness because
+  there the question genuinely is "can this serve".
+- **The deployment guide leads with the always-on requirement**, because it is the one thing that
+  silently breaks monitoring: on a sleeping host the cron timer stops with the process, the
+  dashboard keeps loading, and nothing checks anything.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 338 tests passing.
+
+Both Docker images were built and run, not just written:
+
+- The API image starts in production mode, connects to MongoDB, emits newline-delimited JSON,
+  honours `MONITOR_ENABLED=false`, reports `healthy` from its own healthcheck, runs as `node`, and
+  answers `/api/health/ready` from the host with `{"status":"ready","database":"connected"}`.
+  269 MB.
+- The web image serves the dashboard, returns 200 for a deep link at `/sites/:id` — proving the
+  SPA rewrite works — sends the three security headers, and has `https://api.example.com` baked
+  into its bundle from the build argument.
+
+One nuance worth recording: the first container run used `--network host`, which is a Linux-only
+feature. On Docker Desktop for Windows the port was unreachable from the host even though the
+container's own healthcheck passed. Publishing the port explicitly resolved it — the image was
+never at fault.
+
+---
+
 ## Phase 9 — Notifications, settings, and the monitoring log
 
 **Date:** 2026-09-03 · **Branch:** `feat/notifications-settings`

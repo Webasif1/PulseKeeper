@@ -9,8 +9,17 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.0] — 2026-09-04
+
+First release. A complete, deployable monitoring platform: backend, dashboard, and docs.
+
 ### Added
 
+- Deployment configuration: `vercel.json` with the SPA rewrite and cache headers, a `render.yaml`
+  blueprint, Dockerfiles for the API and the dashboard, and an nginx config. Documented in
+  `docs/DEPLOYMENT.md`, with every setting catalogued in `docs/CONFIGURATION.md`.
 - Notifications, settings, and monitoring log pages: a notification feed with all/unread filtering
   and mark-as-read, a working unread badge in the header, a settings page covering monitoring
   defaults, notification preferences, appearance, data retention and account details, and a log of
@@ -75,6 +84,9 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Fixed
 
+- Light-theme status and accent colours failed WCAG AA contrast as text — online at 2.50:1 and
+  slow at 2.19:1 against 4.5:1 required. Every token now passes AA in both themes, including status
+  text on its badge tint and white text on button fills.
 - The header notification badge always showed zero: it was fed by a prop no page supplied. It now
   reads the unread count from a provider that polls it.
 
@@ -85,4 +97,5 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 - Sorting sites by status now orders by severity — offline, slow, unknown, checking, online,
   paused — rather than alphabetically, which had placed slow sites below paused ones.
 
-[Unreleased]: https://github.com/Webasif1/PulseKeeper/commits/main
+[Unreleased]: https://github.com/Webasif1/PulseKeeper/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Webasif1/PulseKeeper/releases/tag/v0.1.0

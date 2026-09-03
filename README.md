@@ -13,14 +13,12 @@ response-time trends, and incident history in one developer-focused dashboard.
 
 </div>
 
-> **Build status:** PulseKeeper is under active initial development. The backend is complete —
-> auth, site management, SSRF protection, the monitoring engine, and analytics — and the React
-> dashboard is next. See [docs/DEVLOG.md](docs/DEVLOG.md) for what has landed and
-> [docs/CHANGELOG.md](docs/CHANGELOG.md) for released versions.
+> **Try it in three commands.** `npm install && npm run db:up && npm run seed`, then
+> `npm run dev` and sign in as `demo@pulsekeeper.dev` / `pulsekeeper-demo` for a dashboard
+> pre-loaded with a month of realistic history.
 >
-> To try it now: `npm run db:up && npm run seed && npm run dev`, then sign in as
-> `demo@pulsekeeper.dev` / `pulsekeeper-demo` and explore the API described in
-> [docs/API.md](docs/API.md).
+> The build journal is in [docs/DEVLOG.md](docs/DEVLOG.md); released versions in
+> [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ---
 
@@ -84,8 +82,10 @@ and stay within your provider's acceptable-use policy.
 - Helmet, CORS allowlist, rate limiting, and schema validation on all input
 
 **Interface**
-- Light / dark / system themes, responsive from mobile to desktop
-- Status conveyed by icon and text, not color alone
+- Light / dark / system themes, applied before first paint so there is no flash of the wrong one
+- Responsive from mobile to desktop, with a slide-over navigation below `lg`
+- Status conveyed by icon and text, never color alone, and every color token meets WCAG AA
+  contrast in both themes
 - Polished loading, empty, and error states throughout
 
 ---
@@ -286,6 +286,21 @@ Details in [docs/SECURITY-SSRF.md](docs/SECURITY-SSRF.md). To report a vulnerabi
 - SSL certificate and domain expiry monitoring
 - Keyword and JSON-body assertions on responses
 - Maintenance windows that suppress incidents
+
+---
+
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System shape, backend layering, data model, trade-offs |
+| [API.md](docs/API.md) | Every endpoint, the response envelope, rate limits |
+| [MONITORING.md](docs/MONITORING.md) | Scheduling, status rules, incidents, retention |
+| [SECURITY-SSRF.md](docs/SECURITY-SSRF.md) | What the URL guard blocks and why it is layered |
+| [CONFIGURATION.md](docs/CONFIGURATION.md) | Every environment variable and setting |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel, Render, Docker, and verifying a deployment |
+| [DEVLOG.md](docs/DEVLOG.md) | How it was built, phase by phase, and why |
+| [SPEC.md](docs/SPEC.md) | The original product specification |
 
 ---
 
