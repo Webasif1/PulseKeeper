@@ -83,7 +83,7 @@ export function Header({
             {unreadCount > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-offline)] px-1 text-[10px] font-semibold text-white"
+                className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-offline px-1 text-[10px] font-semibold text-white"
               >
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
@@ -93,7 +93,7 @@ export function Header({
           <Dropdown
             label="Account menu"
             trigger={
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-600)] text-xs font-semibold text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
                 {initials}
               </span>
             }

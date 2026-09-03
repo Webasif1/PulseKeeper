@@ -42,7 +42,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           className={cn(
             'w-full appearance-none rounded-lg border bg-[var(--surface-card)] py-2 pr-9 pl-3 text-sm',
             'transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-            error ? 'border-[var(--color-offline)]' : 'border-[var(--border-strong)]',
+            error ? 'border-offline' : 'border-[var(--border-strong)]',
             className,
           )}
           {...props}
@@ -66,7 +66,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           role={error ? 'alert' : undefined}
           className={cn(
             'mt-1.5 text-xs',
-            error ? 'text-[var(--color-offline)]' : 'text-[var(--text-muted)]',
+            error ? 'text-offline' : 'text-[var(--text-muted)]',
           )}
         >
           {error ?? hint}

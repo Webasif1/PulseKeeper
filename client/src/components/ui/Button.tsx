@@ -16,11 +16,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-[var(--color-brand-600)] text-white hover:bg-[var(--color-brand-700)] active:bg-[var(--color-brand-800)] shadow-sm',
+    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-sm',
   secondary:
     'bg-[var(--surface-card)] text-[var(--text-primary)] border border-[var(--border-strong)] hover:bg-[var(--surface-hover)]',
   ghost: 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]',
-  danger: 'bg-[var(--color-offline)] text-white hover:opacity-90 active:opacity-80 shadow-sm',
+  danger: 'bg-offline text-white hover:opacity-90 active:opacity-80 shadow-sm',
 };
 
 const SIZES: Record<Size, string> = {

@@ -33,7 +33,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center gap-2.5 px-5">
         <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-brand-600)]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600"
           aria-hidden="true"
         >
           <Activity className="h-4.5 w-4.5 text-white" />

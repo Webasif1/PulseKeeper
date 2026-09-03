@@ -48,8 +48,8 @@ export function Switch({
           aria-hidden="true"
           className={cn(
             'h-6 w-11 rounded-full transition-colors duration-200',
-            'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--color-brand-500)]',
-            checked ? 'bg-[var(--color-brand-600)]' : 'bg-[var(--border-strong)]',
+            'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-500',
+            checked ? 'bg-brand-600' : 'bg-[var(--border-strong)]',
           )}
         />
         <span

@@ -12,9 +12,9 @@ const ICONS: Record<ToastVariant, typeof Info> = {
 };
 
 const ACCENTS: Record<ToastVariant, string> = {
-  success: 'text-[var(--color-online)]',
-  error: 'text-[var(--color-offline)]',
-  info: 'text-[var(--color-brand-500)]',
+  success: 'text-online',
+  error: 'text-offline',
+  info: 'text-brand-500',
 };
 
 /**

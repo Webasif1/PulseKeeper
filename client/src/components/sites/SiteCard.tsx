@@ -51,7 +51,7 @@ export function SiteCard({
 
           <Link
             to={`/sites/${site.id}`}
-            className="truncate font-medium hover:text-[var(--color-brand-500)] hover:underline"
+            className="truncate font-medium hover:text-brand-500 hover:underline"
           >
             {site.name}
           </Link>

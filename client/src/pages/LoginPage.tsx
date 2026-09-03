@@ -52,7 +52,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <span
-            className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-brand-600)]"
+            className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600"
             aria-hidden="true"
           >
             <Activity className="h-6 w-6 text-white" />
@@ -65,7 +65,7 @@ export function LoginPage() {
           {error && (
             <div
               role="alert"
-              className="rounded-lg bg-[var(--color-offline-soft)] px-3 py-2.5 text-sm text-[var(--color-offline)]"
+              className="rounded-lg bg-offline-soft px-3 py-2.5 text-sm text-offline"
             >
               {error}
             </div>
@@ -104,7 +104,7 @@ export function LoginPage() {
           Don&apos;t have an account?{' '}
           <Link
             to="/register"
-            className="font-medium text-[var(--color-brand-500)] hover:underline"
+            className="font-medium text-brand-500 hover:underline"
           >
             Create one
           </Link>

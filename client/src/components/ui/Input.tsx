@@ -25,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
           {label}
           {required && (
-            <span className="ml-0.5 text-[var(--color-offline)]" aria-hidden="true">
+            <span className="ml-0.5 text-offline" aria-hidden="true">
               *
             </span>
           )}
@@ -58,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             leftIcon && 'pl-9',
             rightSlot && 'pr-10',
             error
-              ? 'border-[var(--color-offline)] focus-visible:outline-[var(--color-offline)]'
+              ? 'border-offline focus-visible:outline-offline'
               : 'border-[var(--border-strong)]',
             className,
           )}
@@ -78,7 +78,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           role={error ? 'alert' : undefined}
           className={cn(
             'mt-1.5 text-xs',
-            error ? 'text-[var(--color-offline)]' : 'text-[var(--text-muted)]',
+            error ? 'text-offline' : 'text-[var(--text-muted)]',
           )}
         >
           {error ?? hint}

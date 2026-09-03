@@ -33,7 +33,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         className={cn(
           'w-full resize-y rounded-lg border bg-[var(--surface-card)] px-3 py-2 text-sm',
           'placeholder:text-[var(--text-muted)] transition-colors focus:outline-none',
-          error ? 'border-[var(--color-offline)]' : 'border-[var(--border-strong)]',
+          error ? 'border-offline' : 'border-[var(--border-strong)]',
           className,
         )}
         {...props}
@@ -45,7 +45,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           role={error ? 'alert' : undefined}
           className={cn(
             'mt-1.5 text-xs',
-            error ? 'text-[var(--color-offline)]' : 'text-[var(--text-muted)]',
+            error ? 'text-offline' : 'text-[var(--text-muted)]',
           )}
         >
           {error ?? hint}

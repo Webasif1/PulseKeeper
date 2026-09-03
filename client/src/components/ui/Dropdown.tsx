@@ -110,7 +110,7 @@ function MenuItem({ item, onDone }: { item: DropdownItem; onDone: () => void }) 
       className={cn(
         'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
         'hover:bg-[var(--surface-hover)] disabled:pointer-events-none disabled:opacity-50',
-        item.destructive ? 'text-[var(--color-offline)]' : 'text-[var(--text-primary)]',
+        item.destructive ? 'text-offline' : 'text-[var(--text-primary)]',
       )}
     >
       {item.icon}

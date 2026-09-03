@@ -151,21 +151,21 @@ export function DashboardPage() {
             label="Online"
             value={stats?.totals.online ?? 0}
             icon={Zap}
-            accent="text-[var(--color-online)]"
+            accent="text-online"
             isLoading={isStatsLoading}
           />
           <StatCard
             label="Slow"
             value={stats?.totals.slow ?? 0}
             icon={AlertTriangle}
-            accent="text-[var(--color-slow)]"
+            accent="text-slow"
             isLoading={isStatsLoading}
           />
           <StatCard
             label="Offline"
             value={stats?.totals.offline ?? 0}
             icon={CircleX}
-            accent="text-[var(--color-offline)]"
+            accent="text-offline"
             isLoading={isStatsLoading}
           />
           <StatCard
@@ -211,7 +211,7 @@ export function DashboardPage() {
               </h3>
               <Link
                 to="/sites"
-                className="text-xs font-medium text-[var(--color-brand-500)] hover:underline"
+                className="text-xs font-medium text-brand-500 hover:underline"
               >
                 View all →
               </Link>
@@ -256,7 +256,7 @@ export function DashboardPage() {
                 stats && stats.activeIncidents > 0 ? (
                   <Link
                     to="/incidents"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-offline-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-offline)]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-offline-soft px-2.5 py-1 text-xs font-medium text-offline"
                   >
                     <Activity className="h-3.5 w-3.5" aria-hidden="true" />
                     {stats.activeIncidents} active

@@ -8,6 +8,68 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 8 — Site details, analytics, and incidents
+
+**Date:** 2026-09-03 · **Branch:** `feat/details-analytics`
+
+### What landed
+
+- `/sites/:id` (SPEC §12): status header with Check Now, pause, and edit; eight statistics; a time
+  range filter; uptime windows; response-time chart; health timeline; status distribution; and a
+  delete action.
+- `/analytics` (SPEC §35): account totals, overall uptime, response-time trend, status
+  distribution, and rankings of the most reliable, slowest, and most failing sites.
+- `/incidents` (SPEC §17) with active/resolved/all filtering.
+- New chart components: `HealthTimeline`, `UptimeWindows`, `StatusDistribution`, `TimeRangeTabs`.
+- 14 new client tests (331 total).
+
+### Decisions
+
+- **The health timeline is plain elements, not a chart library.** It is a strip of discrete
+  outcomes rather than a continuous series, and hand-built segments give better control over hit
+  areas and keyboard access than Recharts would.
+- **Timeline segments open on focus as well as hover.** A mouse-only timeline hides its detail
+  from anyone navigating by keyboard, and each segment carries a label naming its outcome so the
+  strip is not meaningless as pure colour.
+- **The timeline's detail panel is a fixed slot, not a floating tooltip**, so reading across
+  segments does not make the layout jump.
+- **Status distribution uses horizontal bars, not a pie.** Comparing lengths is easier than
+  comparing angles, and a healthy site's distribution is dominated by one value, which leaves a pie
+  with unreadable slivers. A missing status code is labelled "No response" rather than left blank —
+  no reply at all is a worse outcome than any 5xx.
+- **Uptime is coloured where it starts to matter.** 99% sounds healthy and is roughly seven hours
+  of downtime a month, so the thresholds sit at 99.9% and 99%.
+- **A failed analytics request does not fail the page.** The site detail view is still useful
+  without charts, so that error is contained rather than promoted to a full-page state.
+- **The incident row says "Ended", not "Resolved".** The status pill beside it already says
+  Resolved, and repeating the word made the row read as though it held two different facts.
+
+### Fixed during verification
+
+- **Uptime conflated "no data" with "0%".** The API returned `0` both for a window with no checks
+  and for a site that failed every check in it. The client rendered `0` as an em dash, which meant
+  **a site down for a full day would have shown "no data" instead of 0.00%** — the product's
+  headline metric wrong in its worst case. Uptime windows are now `number | null`: `null` for an
+  empty window, `0` for a genuine total outage. Tests on both sides pin the distinction.
+- **The site detail "Uptime in range" tile showed "0.00%" for an empty period.** Visible
+  immediately on the 1-hour range of a demo site, which is checked every 15 minutes and had no
+  checks that recent. It now shows an em dash when the range contains no checks.
+- **85 class references were written the long way.** The status and brand colours are declared in
+  `@theme`, so Tailwind generates real utilities for them — `text-offline` rather than
+  `text-[var(--color-offline)]`. Replaced across 22 files; the built CSS is byte-for-byte
+  equivalent (`.text-offline{color:var(--color-offline)}`). The surface, border, and text tokens
+  are plain CSS variables rather than theme colours, so those correctly keep the bracket form.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 331 tests passing. Against the seeded demo account: site
+analytics returned coherent figures across every range — 24h at 93.75% uptime over 64 checks with
+31 chart points, 30d at 97.19% over 2,848 checks downsampled to 120 points, and the timeline
+capped at 60 segments throughout. The incidents page listed 15 incidents with the one ongoing
+outage first, and filtering to active returned only Movie Spark.
+
+---
+
 ## Phase 7 — Dashboard and site management
 
 **Date:** 2026-09-03 · **Branch:** `feat/dashboard-sites`

@@ -19,8 +19,8 @@ export function ErrorState({
 }) {
   return (
     <div role="alert" className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-offline-soft)]">
-        <AlertCircle className="h-6 w-6 text-[var(--color-offline)]" aria-hidden="true" />
+      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-offline-soft">
+        <AlertCircle className="h-6 w-6 text-offline" aria-hidden="true" />
       </span>
 
       <h3 className="text-sm font-semibold">{title}</h3>

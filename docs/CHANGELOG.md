@@ -11,6 +11,10 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Site detail, analytics, and incident pages: a per-site view with uptime windows, a response-time
+  trend, a hoverable and keyboard-reachable health timeline, HTTP status distribution and a time
+  range filter; an account-wide analytics page with totals and site rankings; and an incidents page
+  filterable by active, resolved, or all.
 - Dashboard and site management: a dashboard with status totals, average response time, uptime,
   a response-time chart and the sites needing attention first; a websites page with search, status
   filtering, sorting and pagination; an add/edit form showing which URL will actually be checked;
@@ -67,6 +71,8 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Changed
 
+- Uptime for a window containing no checks is now reported as `null` rather than `0`, so it renders
+  as "no data" while a genuine total outage still renders as 0.00%.
 - Sorting sites by status now orders by severity — offline, slow, unknown, checking, online,
   paused — rather than alphabetically, which had placed slow sites below paused ones.
 
