@@ -18,13 +18,22 @@ export const SiteStatus = {
 export type SiteStatusValue = (typeof SiteStatus)[keyof typeof SiteStatus];
 export const SITE_STATUSES = Object.values(SiteStatus);
 
-/** SPEC section 9. */
+/**
+ * SPEC section 9, plus `BLOCKED_URL`.
+ *
+ * The extra value is deliberate: when the SSRF guard refuses a URL at check
+ * time — because its DNS record now points somewhere private — that is neither
+ * a connection error nor an HTTP error, and recording it as either would
+ * mislead whoever reads the timeline. It gets its own type so the UI can
+ * explain what actually happened.
+ */
 export const CheckErrorType = {
   TIMEOUT: 'TIMEOUT',
   DNS_ERROR: 'DNS_ERROR',
   CONNECTION_ERROR: 'CONNECTION_ERROR',
   HTTP_ERROR: 'HTTP_ERROR',
   SERVER_ERROR: 'SERVER_ERROR',
+  BLOCKED_URL: 'BLOCKED_URL',
   UNKNOWN: 'UNKNOWN',
 } as const;
 

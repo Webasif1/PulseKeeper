@@ -45,6 +45,22 @@ const envSchema = z
 
     MONITOR_ENABLED: booleanFromString.default('true'),
 
+    /** Cron expression for the monitoring sweep. Every minute by default: the
+     *  sweep itself decides which sites are actually due. */
+    MONITOR_CRON: z.string().min(1).default('* * * * *'),
+
+    /** Cron expression for the retention cleanup. */
+    CLEANUP_CRON: z.string().min(1).default('15 3 * * *'),
+
+    /**
+     * How many sites are checked at once. Bounded so a large account cannot
+     * open hundreds of sockets at the same moment.
+     */
+    MONITOR_CONCURRENCY: z.coerce.number().int().min(1).max(50).default(5),
+
+    /** Redirect hops followed per check. Each hop is revalidated by the guard. */
+    MONITOR_MAX_REDIRECTS: z.coerce.number().int().min(0).max(10).default(3),
+
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
