@@ -8,6 +8,77 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 5 — Analytics and the remaining endpoints
+
+**Date:** 2026-09-03 · **Branch:** `feat/analytics-api`
+
+### What landed
+
+- `analytics.service.ts` — uptime across four windows, response-time series, status distribution,
+  downtime, per-site statistics, dashboard totals, and account-wide rankings.
+- Read services for incidents and notifications, kept apart from the write side, plus settings.
+- Endpoints: `/dashboard/stats`, `/dashboard/analytics`, `/sites/:id/analytics`,
+  `/sites/:id/health`, `/incidents`, `/incidents/:id`, `/notifications` (+ read, read-all),
+  `/settings`, `/monitor/runs`.
+- `scripts/seed.ts` — five demo sites with a month of history (SPEC §39).
+- `docs/API.md` — the full API reference.
+- 40 new tests (262 total).
+
+### Decisions
+
+- **Aggregate in MongoDB, not in Node.** These queries span tens of thousands of checks; reducing
+  them in the process would scale with history rather than with the answer.
+- **All four uptime windows come from one `$facet`.** Four separate queries would each re-scan the
+  index; the widest window bounds a single pass and each facet narrows from there.
+- **Series are downsampled server-side** to roughly 60–120 points per range, via `$dateTrunc` with
+  a per-range bin size. A 90-day chart would otherwise ship ~26,000 rows for the browser to throw
+  away.
+- **Response-time averages exclude failed checks.** A timeout has no duration; counting it as zero
+  would drag the average down and hide real slowness. Verified by a test.
+- **Empty statistics return `null`, not `0`.** `0` reads as "instant", which is a different and
+  wrong claim.
+- **Downtime is computed from incidents, not from failed-check counts.** Checks are samples;
+  multiplying them by an interval would estimate what an incident already records exactly. Spans
+  are clipped to the window so an outage that began earlier cannot report more downtime than the
+  window contains.
+- **Rankings are one grouped pass, sorted three ways in Node.** The result is one row per site, so
+  sorting it in the process is cheaper than three more aggregations.
+- **The notification list returns an unfiltered `unreadCount`.** The badge shows total unread
+  regardless of the panel's filter, so the client never needs a second request.
+- **A partial `notifications` settings object is merged via dotted paths**, not replaced — sending
+  `{onSlow: true}` must not silently switch off `onDown` and `onUp`.
+- **Site ownership is confirmed before any aggregation runs**, so an unauthorised id cannot be used
+  to measure query timings.
+
+### Fixed during verification
+
+- **The demo seed produced zero incidents.** Failures were drawn independently at a realistic rate,
+  which makes three consecutive failures — the incident threshold — essentially impossible. The
+  demo's incidents page would have been empty, which is precisely what it exists to show. Outages
+  are now modelled as clustered spans of 3–10 consecutive failed checks, as real outages behave;
+  the seed produces 14 incidents across five sites.
+- **The live cron was overwriting the demo data.** Within a minute of seeding, four of five demo
+  sites showed `OFFLINE` with a null response time. The cause was not the seed: demo hostnames sit
+  under `example.com`, which RFC 2606 reserves and which therefore cannot resolve, so every sweep
+  failed them with a DNS error and replaced the seeded history. `findDueSites` now excludes
+  `isDemo` sites — they are illustrations, not real targets — with a test to hold it.
+- **The demo's final state was left to chance**, which meant every site tended to end green and the
+  dashboard demonstrated nothing. Each site now declares the state it should be left in; the tail
+  of its generated history is rewritten to match. The result is 2 online, 1 slow, 1 offline, 1
+  paused, with one active incident and unread notifications.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 262 tests passing. Live against the seeded demo account:
+dashboard returned `{sites: 5, online: 2, slow: 1, offline: 1, paused: 1}` with 1 active incident;
+account analytics over 30 days reduced 14,404 checks to 121 chart points and ranked Portfolio most
+reliable (99.83%), API Server slowest (1,700ms), and Movie Spark most failing (78); site analytics
+for Movie Spark returned 97.62% uptime over 7 days against 94.79% over 24 hours — different
+windows genuinely producing different answers. Demo statuses were still intact after the cron had
+been running for several minutes.
+
+---
+
 ## Phase 4 — Monitoring engine
 
 **Date:** 2026-09-03 · **Branch:** `feat/monitoring-engine`

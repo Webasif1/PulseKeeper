@@ -11,6 +11,15 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Analytics: uptime over 24h/7d/30d/90d computed from check history, response-time series
+  downsampled server-side, HTTP status distribution, downtime derived from incidents, per-site
+  statistics, dashboard totals, and account-wide rankings of the most reliable, slowest, and most
+  frequently failing sites.
+- Endpoints for dashboard stats, account and per-site analytics, paginated check history,
+  incidents, notifications (including mark-read and mark-all-read), settings, and the monitoring
+  run log. Documented in `docs/API.md`.
+- `npm run seed`: five demo sites with a month of realistic history, clustered outages, incidents,
+  and notifications, all flagged `isDemo` and excluded from live monitoring.
 - Monitoring engine: scheduled sweeps via node-cron with per-site intervals, bounded concurrency,
   request timeouts, response-time measurement, and error classification; incidents that open only
   after a site's configured number of consecutive failures and resolve on recovery with a recorded

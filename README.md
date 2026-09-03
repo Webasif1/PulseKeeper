@@ -13,10 +13,14 @@ response-time trends, and incident history in one developer-focused dashboard.
 
 </div>
 
-> **Build status:** PulseKeeper is under active initial development. The backend API — auth, site
-> management, and SSRF protection — is in place; the monitoring engine and dashboard are next.
-> See [docs/DEVLOG.md](docs/DEVLOG.md) for what has landed and
+> **Build status:** PulseKeeper is under active initial development. The backend is complete —
+> auth, site management, SSRF protection, the monitoring engine, and analytics — and the React
+> dashboard is next. See [docs/DEVLOG.md](docs/DEVLOG.md) for what has landed and
 > [docs/CHANGELOG.md](docs/CHANGELOG.md) for released versions.
+>
+> To try it now: `npm run db:up && npm run seed && npm run dev`, then sign in as
+> `demo@pulsekeeper.dev` / `pulsekeeper-demo` and explore the API described in
+> [docs/API.md](docs/API.md).
 
 ---
 
