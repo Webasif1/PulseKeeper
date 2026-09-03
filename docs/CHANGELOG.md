@@ -11,6 +11,12 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Frontend foundation: React + Vite + TypeScript + Tailwind workspace, a design system with
+  light/dark/system themes applied before first paint, an axios layer that unwraps the API envelope
+  and normalises errors, auth/theme/toast contexts, a responsive app shell with a mobile slide-over
+  navigation, sign-in and registration pages, and the shared UI primitives — buttons, inputs,
+  selects, switches, cards, badges, modals, dropdowns, tooltips, skeletons, toasts, and status
+  indicators that pair colour with an icon and a label.
 - Analytics: uptime over 24h/7d/30d/90d computed from check history, response-time series
   downsampled server-side, HTTP status distribution, downtime derived from incidents, per-site
   statistics, dashboard totals, and account-wide rankings of the most reliable, slowest, and most

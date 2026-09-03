@@ -8,6 +8,87 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 6 — Frontend foundation
+
+**Date:** 2026-09-03 · **Branch:** `feat/client-foundation`
+
+### What landed
+
+- Vite 7 + React 19 + TypeScript + Tailwind 4 workspace, with ESLint, Vitest, and jsdom.
+- A design system in `index.css`: brand and status palettes in OKLCH, semantic surface tokens, and
+  a class-based dark theme.
+- `services/api.ts` — one axios instance that unwraps the response envelope, normalises every
+  failure into `ApiError`, and announces expired sessions.
+- Contexts for auth, theme, and toasts, each behind a hook that throws if used outside its
+  provider.
+- UI primitives: Button, Input, Select, Textarea, Switch, Card, Badge, Modal, Dropdown, Tooltip,
+  Skeleton, Spinner, EmptyState, ErrorState, Toaster, StatusBadge.
+- `AppShell` with a desktop rail and a mobile slide-over, `Header`, `Sidebar`, `ThemeToggle`,
+  `ProtectedRoute`, and the login and register pages.
+- 33 client tests (295 across both workspaces).
+
+### Decisions
+
+- **The brand colour is indigo, deliberately not green.** Green, amber, and red mean something
+  here — up, slow, down. A green primary button would look like a status, which is the one
+  confusion a monitoring dashboard cannot afford.
+- **The theme class is applied by an inline script in `index.html`,** before React mounts. Reading
+  the stored preference in a `useEffect` renders the default palette for one frame and flashes the
+  wrong colours on every load.
+- **"System" is a live preference, not a one-time reading.** The provider listens for changes, so
+  a machine switching to dark at sunset takes the dashboard with it.
+- **No token is ever held in JavaScript.** The cookie is HTTP-only and the auth context stores only
+  the user object, which is what stops an XSS bug from exfiltrating a session.
+- **A 401 from `/auth/me`, `/auth/login`, or `/auth/register` does not signal an expired session.**
+  There, 401 is the answer to the question asked. Treating it as expiry would fire a
+  session-expired event on every visit by a signed-out user.
+- **The API layer announces expiry through a window event** rather than calling into the auth
+  context, which imports it — a direct call would be a cycle.
+- **`ProtectedRoute` renders a spinner while the session check is in flight** instead of
+  redirecting, which would bounce a signed-in user to the login page on every refresh.
+- **Status is always icon + label + colour** (SPEC §32), with a test per status asserting the text
+  is present. Roughly one man in twelve has a colour vision deficiency, and red/green is the common
+  form — exactly the two colours this product leans on hardest.
+- **Only `OFFLINE` pulses.** Animating every state would make the dashboard restless and rob the
+  one urgent case of its urgency.
+- **The modal, dropdown, and tooltip are hand-written.** What they need is small and specific —
+  Escape to close, focus trapped and restored, `aria-describedby`, opening on focus as well as
+  hover — and a component library would have been a large dependency for it.
+- **`Select` is a native `<select>`.** A custom listbox would need keyboard, focus, and
+  screen-reader work to match what the platform already does, and the native control is better on
+  mobile.
+- **No dev proxy.** The client calls the API on its own origin with credentials, so CORS and the
+  cookie policy behave in development exactly as in production. A proxy would hide misconfiguration
+  in both until deploy day.
+- **Placeholder pages for later phases**, so every navigation link routes somewhere real from the
+  first commit.
+
+### Fixed during verification
+
+- **Two copies of Vite.** The client pinned `^6.2.2` while `@tailwindcss/vite` and
+  `@vitejs/plugin-react` both resolved Vite 7 from the workspace root, so the plugin array failed
+  to typecheck against a different `Plugin` type. Aligned the client on Vite 7; one copy now.
+- **`defineConfig` came from the wrong package.** Vite's own does not accept a `test` block; the
+  one from `vitest/config` is the same function widened, which keeps a single config file.
+- **Tests were leaking DOM into each other.** Testing Library registers its automatic cleanup only
+  when Vitest globals are enabled, and they are not here, so a second `render` found buttons from
+  the first. `cleanup()` now runs in the shared setup.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 295 tests passing (262 server, 33 client). Production build is
+264 kB of JavaScript, 86 kB gzipped, with React and Recharts split into their own chunks. Both
+servers run together: the client serves on 5173, a CORS preflight from that origin returns 204, and
+signing in as the demo account returns `Access-Control-Allow-Origin: http://localhost:5173`,
+`Access-Control-Allow-Credentials: true`, and an `HttpOnly; SameSite=Lax` cookie.
+
+### Note on environment
+
+Port 5050 was still held by a dev server left running from an earlier phase, so the API logged
+`Port is already in use` on startup. Killed the stale process rather than moving the port.
+
+---
+
 ## Phase 5 — Analytics and the remaining endpoints
 
 **Date:** 2026-09-03 · **Branch:** `feat/analytics-api`
