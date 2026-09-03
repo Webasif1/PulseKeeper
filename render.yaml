@@ -1,0 +1,54 @@
+# Render blueprint for the PulseKeeper API.
+#
+# The backend must be always-on for node-cron to be reliable. Render's free
+# instance type sleeps after inactivity, which is exactly the situation SPEC
+# section 41 warns about: on a sleeping host, set MONITOR_ENABLED=false and
+# drive POST /api/monitor/run from an external cron service instead.
+services:
+  - type: web
+    name: pulsekeeper-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: main
+
+    # Built from the repository root so the npm workspace resolves.
+    buildCommand: npm ci && npm run build --workspace server
+    startCommand: npm run start --workspace server
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 5050
+
+      # Set these in the Render dashboard, never in this file.
+      - key: MONGODB_URI
+        sync: false
+
+      - key: CLIENT_URL
+        sync: false
+
+      # Generated once by Render and kept; rotating JWT_SECRET signs everyone out.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: MONITOR_CRON_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+      - key: MONITOR_ENABLED
+        value: true
+
+      - key: LOG_LEVEL
+        value: info
+
+      # Render terminates TLS in front of the app, so the client address
+      # arrives in X-Forwarded-For. Without this, rate limiting sees one IP.
+      - key: TRUST_PROXY
+        value: 1
