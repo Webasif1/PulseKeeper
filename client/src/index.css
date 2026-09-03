@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+/*
+ * Theme switching is class-based rather than media-query-based, because a user
+ * who picks light or dark must override the operating system. "System" simply
+ * means no class is pinned and the OS preference is followed.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /*
+   * Brand colour is indigo, deliberately *not* green.
+   *
+   * Green, amber, and red carry meaning in this product — a site is up, slow,
+   * or down. Using any of them as the brand accent would make a button look
+   * like a status, which is exactly the confusion a monitoring dashboard
+   * cannot afford.
+   */
+  --color-brand-50: oklch(0.97 0.014 285);
+  --color-brand-100: oklch(0.94 0.03 285);
+  --color-brand-200: oklch(0.89 0.055 285);
+  --color-brand-300: oklch(0.81 0.09 285);
+  --color-brand-400: oklch(0.71 0.14 285);
+  --color-brand-500: oklch(0.62 0.18 285);
+  --color-brand-600: oklch(0.55 0.19 285);
+  --color-brand-700: oklch(0.48 0.17 285);
+  --color-brand-800: oklch(0.4 0.14 285);
+  --color-brand-900: oklch(0.33 0.11 285);
+
+  /* Status colours. Always paired with an icon and a label, never used alone. */
+  --color-online: oklch(0.7 0.16 155);
+  --color-online-soft: oklch(0.95 0.04 155);
+  --color-slow: oklch(0.76 0.15 75);
+  --color-slow-soft: oklch(0.96 0.05 75);
+  --color-offline: oklch(0.63 0.21 20);
+  --color-offline-soft: oklch(0.95 0.04 20);
+  --color-paused: oklch(0.6 0.02 260);
+  --color-paused-soft: oklch(0.95 0.005 260);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --radius-card: 0.75rem;
+
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-slide-up: slide-up 0.2s ease-out;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/*
+ * Semantic surface tokens.
+ *
+ * Components reference these rather than raw palette steps, so the dark theme
+ * is defined once here instead of as a `dark:` variant on every element.
+ */
+@layer base {
+  :root {
+    --surface-page: theme(--color-gray-50);
+    --surface-card: white;
+    --surface-raised: white;
+    --surface-hover: theme(--color-gray-100);
+    --surface-inset: theme(--color-gray-100);
+
+    --border-subtle: theme(--color-gray-200);
+    --border-strong: theme(--color-gray-300);
+
+    --text-primary: theme(--color-gray-900);
+    --text-secondary: theme(--color-gray-600);
+    --text-muted: theme(--color-gray-500);
+  }
+
+  .dark {
+    --surface-page: oklch(0.17 0.01 265);
+    --surface-card: oklch(0.21 0.012 265);
+    --surface-raised: oklch(0.25 0.013 265);
+    --surface-hover: oklch(0.27 0.014 265);
+    --surface-inset: oklch(0.19 0.011 265);
+
+    --border-subtle: oklch(0.3 0.014 265);
+    --border-strong: oklch(0.38 0.016 265);
+
+    --text-primary: oklch(0.97 0.003 265);
+    --text-secondary: oklch(0.76 0.012 265);
+    --text-muted: oklch(0.63 0.014 265);
+
+    /* Soft status backgrounds need to be dark tints, not pale washes. */
+    --color-online-soft: oklch(0.28 0.06 155);
+    --color-slow-soft: oklch(0.3 0.07 75);
+    --color-offline-soft: oklch(0.29 0.08 20);
+    --color-paused-soft: oklch(0.27 0.01 260);
+  }
+
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Visible focus everywhere, but only for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* Metrics change constantly; tabular figures stop them jittering. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-200);
+    color: var(--color-brand-900);
+  }
+
+  .dark ::selection {
+    background-color: var(--color-brand-800);
+    color: white;
+  }
+
+  /* Respect a user who has asked for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .surface-card {
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+  }
+
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+
+  .text-muted {
+    color: var(--text-muted);
+  }
+
+  /* Skip link: hidden until focused, then pinned to the top-left. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+  }
+
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 0.5rem;
+  }
+}
