@@ -18,8 +18,22 @@ const OPTIONS: Array<{ value: ThemePreference; label: string; icon: typeof Sun }
  * "system" is a distinct choice: a toggle cannot express "follow the OS", and
  * collapsing it loses the setting the majority of users want.
  */
-export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+export function ThemeToggle({
+  value,
+  onChange,
+}: {
+  /**
+   * Optional overrides so the settings page can also persist the choice to the
+   * account. Left out, the control reads and writes the theme context alone,
+   * which is what the header needs.
+   */
+  value?: ThemePreference;
+  onChange?: (theme: ThemePreference) => void;
+} = {}) {
+  const { theme: contextTheme, setTheme } = useTheme();
+
+  const theme = value ?? contextTheme;
+  const applyTheme = onChange ?? setTheme;
 
   return (
     <div
@@ -37,7 +51,7 @@ export function ThemeToggle() {
             role="radio"
             aria-checked={isSelected}
             aria-label={option.label}
-            onClick={() => setTheme(option.value)}
+            onClick={() => applyTheme(option.value)}
             className={cn(
               'rounded-md p-1.5 transition-colors',
               isSelected
