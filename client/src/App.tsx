@@ -6,9 +6,11 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { LoginPage } from '@/pages/LoginPage';
+import { DashboardPage } from '@/pages/DashboardPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { SitesPage } from '@/pages/SitesPage';
 
 /**
  * Router shell.
@@ -28,24 +30,8 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
 
               <Route element={<ProtectedRoute />}>
-                <Route
-                  path="/"
-                  element={
-                    <PlaceholderPage
-                      title="Dashboard"
-                      description="Stats, site health, response times, and recent incidents land in the next phase."
-                    />
-                  }
-                />
-                <Route
-                  path="/sites"
-                  element={
-                    <PlaceholderPage
-                      title="Websites"
-                      description="Adding, editing, and checking sites lands in the next phase."
-                    />
-                  }
-                />
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/sites" element={<SitesPage />} />
                 <Route
                   path="/incidents"
                   element={
