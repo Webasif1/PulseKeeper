@@ -8,6 +8,73 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 7 — Dashboard and site management
+
+**Date:** 2026-09-03 · **Branch:** `feat/dashboard-sites`
+
+### What landed
+
+- The dashboard (SPEC §10): greeting, six stat cards, website health list, a response-time chart,
+  and an active-incident link.
+- The websites page (SPEC §11, §19): site cards, search, status filter, sorting, and pagination.
+- The add/edit modal (SPEC §34) with a live "will check" preview, and a delete confirmation that
+  spells out what else is removed.
+- "Check Now" (SPEC §21) with a loading state, an outcome toast, and a client cooldown.
+- Hooks: `useSites`, `useCheckNow`, `usePolling`, `useDebounced`.
+- 17 new client tests (313 total).
+
+### Decisions
+
+- **`isLoading` and `isRefreshing` are separate.** A background poll that flipped `isLoading`
+  would replace the whole list with skeletons every 30 seconds, which reads as a crash.
+- **Polling pauses on a hidden tab and refreshes on return.** A background tab cannot show the
+  result, browsers throttle its timers anyway, and a forgotten tab should not make a request a
+  minute all day. Returning refreshes immediately rather than waiting out the interval.
+- **The polling callback lives in a ref**, so a page passing an inline arrow function does not
+  restart the interval on every render.
+- **Out-of-order responses are discarded.** Each list request carries an id, and a slow answer for
+  "rec" is dropped if the newer one for "recallix" has already landed.
+- **The check cooldown is six seconds.** The server allows ten manual checks a minute; the
+  cooldown keeps a user from spending that budget by clicking and then meeting a 429 they did not
+  cause deliberately.
+- **The "Check Now" toast names the outcome**, not just completion — the result is the reason the
+  button was pressed.
+- **The form shows the URL that will actually be checked.** The distinction between the site URL
+  and a dedicated health endpoint is the most confusing part of the form, and without the preview
+  nobody can tell which one the monitor will hit.
+- **Client validation deliberately stops at syntax.** The full SSRF rules stay on the server;
+  duplicating them here would mean two copies of security logic that must not diverge. Server
+  field errors are mapped back onto the inputs, so a blocked address appears under the URL field.
+- **A paused site shows "Paused" where the timestamp goes.** Its last check recedes into the past,
+  and "3 days ago" would suggest monitoring is broken rather than deliberately stopped.
+- **Deleting explains what else goes.** The dialog names the health checks, incidents, and
+  notifications that go with the site, and points at pausing as the non-destructive alternative.
+- **The dashboard edits and deletes in place.** The first draft sent users to the Websites page to
+  finish a deletion they had started on the dashboard; wiring up the same two dialogs was the
+  better answer.
+- **The chart does not animate.** It refreshes on a poll, and an animated redraw every 30 seconds
+  would leave it in permanent motion.
+
+### Fixed during verification
+
+- **Sorting by status was alphabetical, so `SLOW` sorted after `PAUSED`.** A dashboard asking for
+  "problems first" would have buried a degraded site below one deliberately switched off. Status
+  sorting is now by severity — offline, slow, unknown, checking, online, paused — computed in an
+  aggregation stage, with a test that would fail if it reverted to alphabetical.
+- **That aggregation then returned nothing at all.** `find()` casts a string `userId` to an
+  ObjectId through the schema; `aggregate()` passes the filter to MongoDB untouched, so the string
+  matched no document. Eight tests caught it immediately. The filter now casts explicitly.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 313 tests passing. Against the seeded demo account with both
+servers running: the dashboard returned `{sites: 5, online: 2, slow: 1, offline: 1, paused: 1}`
+with one active incident and a 34-point chart; search for "movie" returned one site; the offline
+filter returned Movie Spark; and status sorting listed Movie Spark (offline) and API Server (slow)
+above the healthy sites.
+
+---
+
 ## Phase 6 — Frontend foundation
 
 **Date:** 2026-09-03 · **Branch:** `feat/client-foundation`

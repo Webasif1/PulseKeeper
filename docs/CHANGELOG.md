@@ -11,6 +11,11 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Dashboard and site management: a dashboard with status totals, average response time, uptime,
+  a response-time chart and the sites needing attention first; a websites page with search, status
+  filtering, sorting and pagination; an add/edit form showing which URL will actually be checked;
+  a delete confirmation that names everything it removes; and Check Now with a cooldown. Data
+  refreshes on an interval that pauses while the tab is hidden.
 - Frontend foundation: React + Vite + TypeScript + Tailwind workspace, a design system with
   light/dark/system themes applied before first paint, an axios layer that unwraps the API envelope
   and normalises errors, auth/theme/toast contexts, a responsive app shell with a mobile slide-over
@@ -59,5 +64,10 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 - Open-source files: MIT `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
 - GitHub automation: CI workflow (typecheck, lint, test, build), Dependabot, issue forms, and a
   pull request template.
+
+### Changed
+
+- Sorting sites by status now orders by severity — offline, slow, unknown, checking, online,
+  paused — rather than alphabetically, which had placed slow sites below paused ones.
 
 [Unreleased]: https://github.com/Webasif1/PulseKeeper/commits/main
