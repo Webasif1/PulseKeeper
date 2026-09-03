@@ -1,6 +1,8 @@
 import { Router } from 'express';
 
+import { checkNow } from '../controllers/monitor.controller.js';
 import { create, getOne, list, remove, update } from '../controllers/site.controller.js';
+import { manualCheckLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -29,5 +31,15 @@ router.patch(
 );
 
 router.delete('/:id', validate({ params: siteIdParamSchema }), asyncHandler(remove));
+
+// Rate limited on top of the global ceiling: each call makes an outbound
+// request, so this caps both impatient clicking and any attempt to use the
+// API as a traffic source.
+router.post(
+  '/:id/check',
+  manualCheckLimiter,
+  validate({ params: siteIdParamSchema }),
+  asyncHandler(checkNow),
+);
 
 export default router;

@@ -3,6 +3,7 @@ import type { Server } from 'node:http';
 import { createApp } from './app.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { env } from './config/env.js';
+import { startJobs, stopJobs } from './jobs/index.js';
 import { logger } from './utils/logger.js';
 
 let server: Server | undefined;
@@ -26,6 +27,9 @@ async function shutdown(signal: string, exitCode = 0): Promise<void> {
   forceExit.unref();
 
   try {
+    // Stop scheduling new sweeps before closing anything they depend on.
+    stopJobs();
+
     if (server) {
       await new Promise<void>((resolve, reject) => {
         server?.close((error) => (error ? reject(error) : resolve()));
@@ -53,6 +57,10 @@ async function bootstrap(): Promise<void> {
       `PulseKeeper API listening on http://localhost:${env.PORT}`,
     );
   });
+
+  // Started after the listener, so a scheduling problem cannot stop the API
+  // from serving requests.
+  startJobs();
 
   server.on('error', (error: NodeJS.ErrnoException) => {
     if (error.code === 'EADDRINUSE') {
