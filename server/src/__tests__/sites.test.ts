@@ -355,6 +355,36 @@ describe('GET /api/sites', () => {
     expect(response.body.data.items[0].name).toBe('Paused');
   });
 
+  it('sorts by status severity, not alphabetically', async () => {
+    const { cookie } = await createUser('severity@example.com');
+
+    // Create in an order that a stable sort would preserve, so the assertion
+    // cannot pass by accident.
+    for (const [name, status] of [
+      ['Paused site', 'PAUSED'],
+      ['Slow site', 'SLOW'],
+      ['Online site', 'ONLINE'],
+      ['Offline site', 'OFFLINE'],
+    ] as const) {
+      const site = await addSite(cookie, { name });
+      await Site.updateOne({ _id: site.id }, { $set: { currentStatus: status } });
+    }
+
+    const response = await request(app)
+      .get('/api/sites?sort=status&order=asc')
+      .set('Cookie', cookie);
+
+    // Alphabetically SLOW sorts last, after PAUSED — which would bury a
+    // degraded site below one that is deliberately switched off. Ascending
+    // must mean "needs attention first".
+    expect(response.body.data.items.map((site: { currentStatus: string }) => site.currentStatus)).toEqual([
+      'OFFLINE',
+      'SLOW',
+      'ONLINE',
+      'PAUSED',
+    ]);
+  });
+
   it('sorts by name', async () => {
     const { cookie } = await createUser('sort@example.com');
     await addSite(cookie, { name: 'Zebra' });

@@ -1,4 +1,4 @@
-import type { FilterQuery, SortOrder, Types } from 'mongoose';
+import { Types, type FilterQuery } from 'mongoose';
 
 import { HealthCheck, Incident, Notification, Settings, Site, type ISite } from '../models/index.js';
 import { SiteStatus, type SiteStatusValue } from '../types/domain.js';
@@ -95,11 +95,43 @@ function escapeRegex(value: string): string {
 /** Map the API's sort names onto document fields. */
 const SORT_FIELDS: Record<ListSitesQuery['sort'], string> = {
   name: 'name',
-  status: 'currentStatus',
+  status: 'statusRank',
   responseTime: 'currentResponseTime',
   uptime: 'uptimePercentage',
   lastChecked: 'lastCheckedAt',
   createdAt: 'createdAt',
+};
+
+/**
+ * Sorting by status means sorting by severity, not alphabetically.
+ *
+ * Alphabetical order puts SLOW last — after PAUSED — so a dashboard asking for
+ * "problems first" would bury a degraded site below one that is deliberately
+ * switched off. This ranks by how much attention a site needs, so ascending
+ * order is most urgent first.
+ */
+const STATUS_SEVERITY: Record<SiteStatusValue, number> = {
+  [SiteStatus.OFFLINE]: 0,
+  [SiteStatus.SLOW]: 1,
+  [SiteStatus.UNKNOWN]: 2,
+  [SiteStatus.CHECKING]: 3,
+  [SiteStatus.ONLINE]: 4,
+  [SiteStatus.PAUSED]: 5,
+};
+
+/** `$switch` branches that attach the severity rank to each document. */
+const STATUS_RANK_STAGE = {
+  $addFields: {
+    statusRank: {
+      $switch: {
+        branches: Object.entries(STATUS_SEVERITY).map(([status, rank]) => ({
+          case: { $eq: ['$currentStatus', status] },
+          then: rank,
+        })),
+        default: 9,
+      },
+    },
+  },
 };
 
 export interface ListSitesResult {
@@ -117,7 +149,10 @@ export async function listSites(
   userId: string,
   query: ListSitesQuery,
 ): Promise<ListSitesResult> {
-  const filter: FilterQuery<ISite> = { userId };
+  // Cast explicitly: find() would coerce this string to an ObjectId through
+  // the schema, but aggregate() passes the filter to MongoDB untouched, so a
+  // string here would silently match nothing.
+  const filter: FilterQuery<ISite> = { userId: new Types.ObjectId(userId) };
 
   if (query.status) {
     filter.currentStatus = query.status;
@@ -135,18 +170,24 @@ export async function listSites(
   }
 
   const sortField = SORT_FIELDS[query.sort];
-  const direction: SortOrder = query.order === 'asc' ? 1 : -1;
+  const direction = query.order === 'asc' ? 1 : -1;
 
+  // An aggregation rather than find(), because sorting by status needs a
+  // computed severity rank that no stored field carries. `_id` is the
+  // tie-breaker so paging cannot repeat or skip a row when several sites share
+  // a sort value.
   const [items, total] = await Promise.all([
-    Site.find(filter)
-      .sort({ [sortField]: direction, _id: 1 })
-      .skip((query.page - 1) * query.limit)
-      .limit(query.limit)
-      .lean(),
+    Site.aggregate<RawSite>([
+      { $match: filter },
+      STATUS_RANK_STAGE,
+      { $sort: { [sortField]: direction, _id: 1 } },
+      { $skip: (query.page - 1) * query.limit },
+      { $limit: query.limit },
+    ]),
     Site.countDocuments(filter),
   ]);
 
-  return { items: (items as RawSite[]).map(toPublicSite), total };
+  return { items: items.map(toPublicSite), total };
 }
 
 export async function getSiteById(userId: string, siteId: string): Promise<PublicSite> {
