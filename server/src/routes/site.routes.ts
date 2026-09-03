@@ -1,11 +1,16 @@
 import { Router } from 'express';
 
+import { siteAnalytics, siteHealthHistory } from '../controllers/analytics.controller.js';
 import { checkNow } from '../controllers/monitor.controller.js';
 import { create, getOne, list, remove, update } from '../controllers/site.controller.js';
 import { manualCheckLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import {
+  healthHistoryQuerySchema,
+  timeRangeQuerySchema,
+} from '../validators/analytics.validators.js';
 import {
   createSiteSchema,
   listSitesQuerySchema,
@@ -40,6 +45,18 @@ router.post(
   manualCheckLimiter,
   validate({ params: siteIdParamSchema }),
   asyncHandler(checkNow),
+);
+
+router.get(
+  '/:id/health',
+  validate({ params: siteIdParamSchema, query: healthHistoryQuerySchema }),
+  asyncHandler(siteHealthHistory),
+);
+
+router.get(
+  '/:id/analytics',
+  validate({ params: siteIdParamSchema, query: timeRangeQuerySchema }),
+  asyncHandler(siteAnalytics),
 );
 
 export default router;
