@@ -21,20 +21,34 @@
   --color-brand-200: oklch(0.89 0.055 285);
   --color-brand-300: oklch(0.81 0.09 285);
   --color-brand-400: oklch(0.71 0.14 285);
-  --color-brand-500: oklch(0.62 0.18 285);
+  /* 500 is the link and accent text colour, so it carries the same 4.5:1
+     requirement as the status colours. */
+  --color-brand-500: oklch(0.56 0.17 285);
   --color-brand-600: oklch(0.55 0.19 285);
   --color-brand-700: oklch(0.48 0.17 285);
   --color-brand-800: oklch(0.4 0.14 285);
   --color-brand-900: oklch(0.33 0.11 285);
 
-  /* Status colours. Always paired with an icon and a label, never used alone. */
-  --color-online: oklch(0.7 0.16 155);
+  /*
+   * Status colours. Always paired with an icon and a label, never used alone.
+   *
+   * These are the *light theme* values, and they are darker than the obvious
+   * choice on purpose. Status is rendered as text — "Online", "Slow", "3
+   * offline" — and the vivid versions measured 2.50:1, 2.19:1, and 3.88:1
+   * against white, well under the 4.5:1 WCAG AA needs for body text. Each value
+   * below is the lightest that clears 4.5:1 against both white and its own soft
+   * tint, so the colour stays as saturated as accessibility allows.
+   *
+   * The dark theme overrides them back to the brighter versions, which measure
+   * 7.10:1, 8.08:1, and 4.56:1 on the dark card surface.
+   */
+  --color-online: oklch(0.51 0.15 155);
   --color-online-soft: oklch(0.95 0.04 155);
-  --color-slow: oklch(0.76 0.15 75);
+  --color-slow: oklch(0.54 0.14 75);
   --color-slow-soft: oklch(0.96 0.05 75);
-  --color-offline: oklch(0.63 0.21 20);
+  --color-offline: oklch(0.545 0.19 20);
   --color-offline-soft: oklch(0.95 0.04 20);
-  --color-paused: oklch(0.6 0.02 260);
+  --color-paused: oklch(0.5 0.02 260);
   --color-paused-soft: oklch(0.95 0.005 260);
 
   --font-sans:
@@ -115,6 +129,17 @@
     --text-primary: oklch(0.97 0.003 265);
     --text-secondary: oklch(0.76 0.012 265);
     --text-muted: oklch(0.63 0.014 265);
+
+    /*
+     * Status colours go back to their vivid form here: against the dark card
+     * surface those measure 7.10:1, 8.08:1, and 4.56:1, so the darker
+     * light-theme values would only make them muddy for no accessibility gain.
+     */
+    --color-online: oklch(0.7 0.16 155);
+    --color-slow: oklch(0.76 0.15 75);
+    --color-offline: oklch(0.63 0.21 20);
+    --color-paused: oklch(0.66 0.02 260);
+    --color-brand-500: oklch(0.68 0.16 285);
 
     /* Soft status backgrounds need to be dark tints, not pale washes. */
     --color-online-soft: oklch(0.28 0.06 155);
