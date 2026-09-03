@@ -8,6 +8,84 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 3 — Site CRUD and SSRF protection
+
+**Date:** 2026-09-03 · **Branch:** `feat/sites-crud-ssrf`
+
+### What landed
+
+- `utils/urlGuard.ts` — the SSRF guard, and the most security-critical file in the project.
+  Protocol allowlist, hostname rules, address classification, redirect revalidation, and a
+  connect-time DNS hook.
+- Sites CRUD scoped to the authenticated user: list with search, status filter, tag filter,
+  sorting, and pagination; create; read; update; delete with cascade.
+- `docs/SECURITY-SSRF.md` documenting what is blocked, how, and the limitations.
+- 103 new tests (154 total), 60 of them against the guard alone.
+
+### Decisions
+
+- **The address policy is an allowlist, not a denylist.** An address is permitted only if
+  `ipaddr.js` classifies it as public `unicast`; loopback, private, link-local, unique-local,
+  carrier-grade NAT, multicast, broadcast, reserved, 6to4, and Teredo are all refused by falling
+  outside that one category. A denylist of ranges needs updating whenever a new special-purpose
+  range is assigned — this does not.
+- **Addresses are parsed, never string-matched.** `127.0.0.1` is also `2130706433`, `0x7f000001`,
+  `127.1`, and `::ffff:127.0.0.1`. Parsing catches every spelling; string comparison catches one.
+  IPv4-mapped IPv6 addresses are unwrapped before judgement.
+- **The guard runs three times, at three different moments.** On write, at check time, and inside
+  the socket's own DNS lookup via `createGuardedLookup`. Only the third closes DNS rebinding:
+  validating before a request leaves a window in which a one-second-TTL record can answer the
+  validating lookup publicly and the socket's lookup with loopback. Checking the address the
+  connection actually uses removes the window.
+- **Every resolved address is checked, not just the first.** Otherwise a hostname answering with
+  one public and one private address would pass or fail depending on resolver ordering, which the
+  attacker controls.
+- **Blocked addresses are logged but never returned to the client.** Echoing "10.0.4.17 is not
+  allowed" turns the endpoint into an internal network mapper. The client is told only that the
+  URL resolves to a private or reserved address.
+- **Redirects are followed manually.** `fetch` follows them without asking, which would let a
+  public first hop redirect to `169.254.169.254`. A relative `Location` is resolved against the
+  URL that produced it, then revalidated.
+- **Cross-tenant access returns 404, not 403.** A 403 would confirm the id exists; 404 is what a
+  genuinely missing site returns, so the two are indistinguishable.
+- **Site schemas are `.strict()`.** An attempt to pass `userId` in the body is rejected outright
+  rather than silently dropped, which is both safer and a clearer error.
+- **Search escapes regex metacharacters.** Without it, a search for `.*` would match every site;
+  there is a test asserting it matches none.
+- **URL validation is split.** The synchronous half runs in the Zod schema so the client gets a
+  field-level message on `url`; the DNS half runs in the service, because Zod refinements are
+  synchronous.
+- **Only changed URLs are revalidated on update**, so renaming a site does not fail because a
+  resolver was briefly unhappy.
+- **Deleting a site cascades** to its health checks, incidents, and notifications. Orphans would
+  otherwise skew every aggregate that counts them.
+
+### Fixed during verification
+
+- **The same resource had two shapes.** Live output showed `POST /api/sites` returning `id`,
+  `_id`, `__v`, `userId`, and the `checkUrl` virtual, while `GET /api/sites` — which uses
+  `.lean()`, dropping virtuals — returned `_id` and no `checkUrl`. A frontend would have had to
+  handle both. All read paths now go through one `toPublicSite` serialiser: `id` only, `checkUrl`
+  always present, `_id`/`__v`/`userId` never. Three tests assert create, get, and list return
+  identical key sets.
+- **`mongodb-memory-server` was still in `package.json`.** The install that added it was
+  cancelled mid-flight in Phase 2 after the decision to test against real MongoDB, but npm had
+  already written the manifest and it was committed. Removed.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 154 tests passing. Live smoke against the running API with
+real DNS: `https://example.com` stored successfully, while `http://localhost:8080`,
+`http://169.254.169.254/latest/meta-data/`, `http://2130706433`, and `file:///etc/passwd` were
+each refused with a field-level message and nothing written to the database.
+
+### Note on environment
+
+Docker Desktop was not running at the start of this phase, so the test helper's "start it with
+`npm run db:up`" message appeared exactly as intended before the container was brought up.
+
+---
+
 ## Phase 2 — Data model and authentication
 
 **Date:** 2026-09-02 · **Branch:** `feat/auth`

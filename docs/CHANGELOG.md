@@ -11,6 +11,13 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- SSRF protection on every user-supplied URL: an http/https allowlist, internal hostname rules,
+  address classification that permits only public unicast addresses, unwrapping of IPv4-mapped
+  IPv6 and numeric address encodings, per-hop redirect revalidation, and a connect-time DNS hook
+  that closes DNS rebinding. Documented in `docs/SECURITY-SSRF.md`.
+- Site management: create, read, update, and delete, all scoped to the authenticated user, with
+  search by name, URL, or tag, status and tag filters, sorting, pagination, pause/resume, and a
+  cascade that removes a deleted site's health checks, incidents, and notifications.
 - Data model: `User`, `Site`, `HealthCheck`, `Incident`, `Notification`, `Settings`, and
   `MonitorRun` schemas with the indexes the dashboard, scheduler, and analytics queries depend on,
   including a partial unique index that permits only one active incident per site.

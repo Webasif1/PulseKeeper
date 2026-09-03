@@ -13,8 +13,9 @@ response-time trends, and incident history in one developer-focused dashboard.
 
 </div>
 
-> **Build status:** PulseKeeper is under active initial development. The repository is being built
-> phase by phase — see [docs/DEVLOG.md](docs/DEVLOG.md) for what has landed and
+> **Build status:** PulseKeeper is under active initial development. The backend API — auth, site
+> management, and SSRF protection — is in place; the monitoring engine and dashboard are next.
+> See [docs/DEVLOG.md](docs/DEVLOG.md) for what has landed and
 > [docs/CHANGELOG.md](docs/CHANGELOG.md) for released versions.
 
 ---
