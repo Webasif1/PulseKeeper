@@ -127,6 +127,15 @@ describe('findDueSites', () => {
 
     expect(await findDueSites()).toHaveLength(0);
   });
+
+  it('excludes demo sites', async () => {
+    await createSite({ isDemo: true });
+
+    // Demo hostnames live under example.com, which RFC 2606 reserves and which
+    // therefore cannot resolve. Checking them would fail every time and
+    // overwrite the seeded history with DNS errors within a minute of seeding.
+    expect(await findDueSites()).toHaveLength(0);
+  });
 });
 
 describe('checkSite', () => {
