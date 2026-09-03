@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import authRoutes from './auth.routes.js';
 import healthRoutes from './health.routes.js';
+import siteRoutes from './site.routes.js';
 
 /**
  * API root. Every feature router mounts here, so `app.ts` stays free of route
@@ -11,5 +12,6 @@ const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/sites', siteRoutes);
 
 export default router;
