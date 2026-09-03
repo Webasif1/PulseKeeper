@@ -6,10 +6,13 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { LoginPage } from '@/pages/LoginPage';
+import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { IncidentsPage } from '@/pages/IncidentsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { SiteDetailPage } from '@/pages/SiteDetailPage';
 import { SitesPage } from '@/pages/SitesPage';
 
 /**
@@ -32,24 +35,9 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/sites" element={<SitesPage />} />
-                <Route
-                  path="/incidents"
-                  element={
-                    <PlaceholderPage
-                      title="Incidents"
-                      description="Active and resolved incidents with durations arrive shortly."
-                    />
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <PlaceholderPage
-                      title="Analytics"
-                      description="Uptime, response-time trends, and site rankings arrive shortly."
-                    />
-                  }
-                />
+                <Route path="/sites/:id" element={<SiteDetailPage />} />
+                <Route path="/incidents" element={<IncidentsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route
                   path="/notifications"
                   element={

@@ -141,8 +141,14 @@ function createClient(): AxiosInstance {
 
 export const api = createClient();
 
-/** Thin helpers so call sites read as `get<Site>('/api/sites/1')`. */
-export async function get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+/**
+ * Thin helpers so call sites read as `get<Site>('/api/sites/1')`.
+ *
+ * `params` is typed as `object` rather than `Record<string, unknown>` so a
+ * declared interface can be passed directly — TypeScript does not consider an
+ * interface without an index signature assignable to a Record.
+ */
+export async function get<T>(url: string, params?: object): Promise<T> {
   const response = await api.get<T>(url, { params });
   return response.data;
 }
