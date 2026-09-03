@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Dropdown } from '@/components/ui/Dropdown';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/useToast';
 
 import { ThemeToggle } from './ThemeToggle';
@@ -17,16 +18,18 @@ export function Header({
   title,
   description,
   actions,
-  unreadCount = 0,
   onOpenNavigation,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
-  unreadCount?: number;
   onOpenNavigation: () => void;
 }) {
   const { user, logout } = useAuth();
+  // From context, not a prop: the bell is visible on every page, so a count
+  // passed in by whichever page happened to fetch it would read zero
+  // everywhere else.
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const toast = useToast();
 

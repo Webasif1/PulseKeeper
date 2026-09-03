@@ -17,13 +17,11 @@ export function AppShell({
   title,
   description,
   actions,
-  unreadCount,
   children,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
-  unreadCount?: number;
   children: ReactNode;
 }) {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
@@ -80,7 +78,6 @@ export function AppShell({
           title={title}
           description={description}
           actions={actions}
-          unreadCount={unreadCount}
           onOpenNavigation={() => setIsNavigationOpen(true)}
         />
 
