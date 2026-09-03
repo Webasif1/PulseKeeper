@@ -11,6 +11,10 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Notifications, settings, and monitoring log pages: a notification feed with all/unread filtering
+  and mark-as-read, a working unread badge in the header, a settings page covering monitoring
+  defaults, notification preferences, appearance, data retention and account details, and a log of
+  every monitoring sweep with its counters.
 - Site detail, analytics, and incident pages: a per-site view with uptime windows, a response-time
   trend, a hoverable and keyboard-reachable health timeline, HTTP status distribution and a time
   range filter; an account-wide analytics page with totals and site rankings; and an incidents page
@@ -68,6 +72,11 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 - Open-source files: MIT `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
 - GitHub automation: CI workflow (typecheck, lint, test, build), Dependabot, issue forms, and a
   pull request template.
+
+### Fixed
+
+- The header notification badge always showed zero: it was fed by a prop no page supplied. It now
+  reads the unread count from a provider that polls it.
 
 ### Changed
 

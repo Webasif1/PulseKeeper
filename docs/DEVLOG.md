@@ -8,6 +8,62 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 9 — Notifications, settings, and the monitoring log
+
+**Date:** 2026-09-03 · **Branch:** `feat/notifications-settings`
+
+### What landed
+
+- `/notifications` (SPEC §18) with all/unread filtering, mark-one-read, and mark-all-read.
+- A `NotificationProvider` that polls the unread count, so the header bell works everywhere.
+- `/settings` (SPEC §36) with all five sections: monitoring defaults, notifications, appearance,
+  data retention, and account.
+- `/logs` (SPEC §40) listing every monitoring sweep and its counters.
+- The last placeholder page is gone; every route now renders a real page.
+- 7 new client tests (338 total).
+
+### Decisions
+
+- **The unread count lives in context, not on the notifications page.** The bell is visible from
+  every page, so a count fetched only where the list renders would sit at zero everywhere else —
+  worse than showing nothing at all. The provider sits inside `AuthProvider` and stays idle until
+  authentication resolves.
+- **The badge polls once a minute**, half as often as the dashboard. A count is not urgent, and the
+  notifications page corrects it from its own response the moment it loads.
+- **Marking read updates locally first.** Waiting for the round trip makes the click feel broken; a
+  failure reloads the list and puts the truth back.
+- **Settings save per field, with no Save button.** These are independent preferences rather than a
+  form, and a field-level busy state means one toggle does not freeze the page. Each change is
+  optimistic and reverts on failure.
+- **Theme is applied locally first, then stored on the account.** The local write is what makes the
+  change instant and survives a reload before the request lands; the account copy is what lets
+  another device pick it up.
+- **`ThemeToggle` takes optional overrides.** The header uses the theme context alone, while
+  settings needs the same control to also persist to the server — one component, not two.
+- **Unread notifications are marked with a "New" label**, not weight alone: a bold-versus-normal
+  difference is easy to miss in a long list and invisible to anyone not seeing the styling.
+- **The monitoring log is a table that scrolls inside its own container**, so a narrow screen never
+  makes the page itself scroll sideways. Its footer repeats that idle ticks are not recorded, so an
+  operator does not read the gaps as missed sweeps.
+
+### Fixed during verification
+
+- **The header notification badge was permanently zero.** `AppShell` accepted an `unreadCount` prop
+  and passed it to `Header`, but no page ever supplied one, so the bell showed nothing regardless
+  of how many unread notifications existed. The prop is gone; `Header` reads the count from context.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 338 tests passing. Live against the demo account: the
+notification list reported 6 unread out of 11, the unread-only filter returned 2 items while
+still reporting all 6 unread, and marking one read dropped the count to 5. A partial settings
+update of `{notifications: {onSlow: true}}` left `onDown` and `onUp` untouched, and changing theme
+and retention together left the monitoring defaults alone. The monitoring log showed 69 recorded
+sweeps, each checking the three real (non-demo) sites left over from earlier smoke tests — which
+also confirms the cron has been running and correctly skipping demo data.
+
+---
+
 ## Phase 8 — Site details, analytics, and incidents
 
 **Date:** 2026-09-03 · **Branch:** `feat/details-analytics`
