@@ -36,6 +36,11 @@ export interface SweepSummary {
 export async function findDueSites(now: Date = new Date()): Promise<SiteWithId[]> {
   const sites = await Site.find({
     monitoringEnabled: true,
+    // Demo sites are illustrations, not real targets. Their hostnames are
+    // under example.com, which RFC 2606 reserves and which therefore cannot
+    // resolve — so checking them would fail every time and overwrite the
+    // seeded history with DNS errors within a minute of seeding it.
+    isDemo: { $ne: true },
     $expr: {
       $or: [
         { $eq: [{ $ifNull: ['$lastCheckedAt', null] }, null] },
