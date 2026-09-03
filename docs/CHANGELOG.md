@@ -11,6 +11,14 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- Monitoring engine: scheduled sweeps via node-cron with per-site intervals, bounded concurrency,
+  request timeouts, response-time measurement, and error classification; incidents that open only
+  after a site's configured number of consecutive failures and resolve on recovery with a recorded
+  duration; in-app notifications behind a channel interface ready for email, Slack, Discord,
+  Telegram, and webhooks; a persisted monitoring run log; and a daily retention job honouring each
+  user's window. Documented in `docs/MONITORING.md`.
+- `POST /api/monitor/run` for external cron services, authenticated by a constant-time
+  shared-secret comparison, and `POST /api/sites/:id/check` for manual checks.
 - SSRF protection on every user-supplied URL: an http/https allowlist, internal hostname rules,
   address classification that permits only public unicast addresses, unwrapping of IPv4-mapped
   IPv6 and numeric address encodings, per-hop redirect revalidation, and a connect-time DNS hook

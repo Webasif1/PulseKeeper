@@ -8,6 +8,88 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Phase 4 — Monitoring engine
+
+**Date:** 2026-09-03 · **Branch:** `feat/monitoring-engine`
+
+### What landed
+
+- `healthCheck.service.ts` — a single guarded check: timeout, timing, error classification, manual
+  redirect following, status decision.
+- `incident.service.ts` — consecutive-failure thresholds, incident open and resolve, duration.
+- `notification.service.ts` — in-app notifications behind a `NotificationChannel` interface, with
+  user preferences honoured.
+- `monitoring.service.ts` — due-site selection, bounded concurrency, per-site containment, cached
+  status updates, rolling uptime, and the run summary.
+- `jobs/` — `monitoringJob` (node-cron sweep) and `cleanupJob` (per-user retention), started from
+  `server.ts` and stopped on shutdown.
+- `POST /api/monitor/run` behind a constant-time shared-secret check, and
+  `POST /api/sites/:id/check` for "Check Now".
+- `docs/MONITORING.md`.
+- 69 new tests (223 total).
+
+### Decisions
+
+- **`node:http` rather than `fetch`.** Two things `fetch` cannot do: accept a custom `lookup` (the
+  hook the SSRF guard needs to validate the address the socket actually connects to) and let
+  redirects be intercepted per hop. Both are requirements, not preferences.
+- **Timing stops at response headers, and the body is discarded unread.** Downloading it would
+  measure the monitoring server's bandwidth instead of the site's responsiveness, and would score
+  a large page worse than a slow one. Redirect hops are summed, since reporting only the final hop
+  would hide the true cost of reaching the site.
+- **`BLOCKED_URL` added to the error types in SPEC §9.** When a hostname's DNS record changes to
+  point somewhere private, the check is neither a connection error nor an HTTP error; recording it
+  as either would mislead whoever reads the timeline.
+- **A response exactly at the slow threshold is `ONLINE`.** "Slow" means over the line, not on it.
+- **One cron schedule, not one per site.** The sweep asks which sites are due using a
+  field-relative comparison, so every interval is served by a single schedule and no site change
+  touches the scheduler. Due sites are ordered oldest-first so a backlog drains fairly.
+- **Overlapping sweeps are skipped**, not queued: a sweep slower than the tick would otherwise
+  double the outbound requests.
+- **Recovery is immediate — one success resolves an incident.** Requiring several would inflate
+  reported downtime, and the timeline already shows a flapping site for what it is.
+- **A duplicate-key error when opening an incident is an expected outcome, not a failure.** The
+  partial unique index is what prevents a manual check racing the cron sweep from opening two
+  incidents for one outage; the loser reuses the winner's incident.
+- **A notification channel's failure is logged, never propagated.** A broken integration must not
+  fail a monitoring sweep.
+- **`runWithConcurrency` instead of `p-limit`.** Twelve lines, it is all the sweep needs, and an
+  open-source project is better served by one fewer package in its tree.
+- **The monitor trigger uses `timingSafeEqual`**, with the length check separated so a mismatch
+  cannot be distinguished by timing. If no secret is configured the route refuses everything
+  rather than standing open.
+- **"Check Now" works on a paused site.** Pausing stops the schedule, not the button; an explicit
+  request is a deliberate act.
+- **The health-check tests mock the guard; one test deliberately does not.** Mocking lets the
+  suite run against a loopback server. The final test reaches past the mock to the real guard and
+  asserts loopback is refused, so a regression that removed the check could not pass unnoticed.
+  There is no bypass flag in production code.
+
+### Fixed during verification
+
+- **Idle cron ticks were writing an empty row every minute.** Visible immediately in the live run
+  log: four `checked: 0` records among six. That is roughly 1,400 empty rows a day, which would
+  bury the runs that actually did something and make the monitoring log page useless. Sweeps that
+  find nothing due are no longer persisted — unless a person triggered them, since whoever pressed
+  the button is entitled to see that it ran.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 223 tests passing. End-to-end against the real network with
+cron running:
+
+- `https://example.com` checked `ONLINE` in 48ms; a deliberately broken path returned `OFFLINE`
+  with `HTTP 404`.
+- The external trigger returned `{"checked":2,"online":1,"offline":1,"errors":0}` with the correct
+  secret and `401` with a wrong one.
+- At the second consecutive failure (threshold 2) an incident opened with reason
+  `Server returned HTTP 404`; repointing the site at a working URL and rechecking resolved it with
+  `durationSeconds: 122`.
+- Notifications recorded `SITE_DOWN` then `SITE_UP` — "Recovered after 2 minutes".
+- The in-process cron ran unattended on its own schedule throughout.
+
+---
+
 ## Phase 3 — Site CRUD and SSRF protection
 
 **Date:** 2026-09-03 · **Branch:** `feat/sites-crud-ssrf`
