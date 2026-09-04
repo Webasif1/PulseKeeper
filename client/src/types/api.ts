@@ -32,6 +32,8 @@ export type NotificationType =
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
+export type ChannelType = 'SLACK' | 'DISCORD' | 'WEBHOOK' | 'EMAIL';
+
 export type TimeRange = '1h' | '24h' | '7d' | '30d' | '90d';
 
 export interface User {
@@ -118,6 +120,20 @@ export interface Settings {
   dataRetentionDays: number;
   notifications: { onDown: boolean; onUp: boolean; onSlow: boolean };
   theme: ThemePreference;
+}
+
+export interface NotificationChannel {
+  id: string;
+  type: ChannelType;
+  name: string;
+  /** Redacted. The full webhook URL is a secret and never leaves the server. */
+  targetPreview: string;
+  enabled: boolean;
+  lastUsedAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+  consecutiveFailures: number;
+  createdAt: string;
 }
 
 /** `null` means the window held no checks — not 0%, which is a total outage. */

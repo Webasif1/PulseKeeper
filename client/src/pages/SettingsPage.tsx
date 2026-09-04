@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AppShell } from '@/components/layout/AppShell';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { ChannelList } from '@/components/settings/ChannelList';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/Input';
@@ -208,6 +209,16 @@ export function SettingsPage() {
                 />
               </>
             )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Delivery channels"
+            description="Where alerts are sent. Without one, notifications only appear in this dashboard."
+          />
+          <CardBody>
+            <ChannelList />
           </CardBody>
         </Card>
 

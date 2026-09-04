@@ -13,6 +13,7 @@ export function Switch({
   description,
   disabled,
   id,
+  hideLabel = false,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -20,16 +21,23 @@ export function Switch({
   description?: string;
   disabled?: boolean;
   id?: string;
+  /**
+   * Render the label for screen readers only, for rows where surrounding text
+   * already makes the toggle's purpose obvious. The label is still required —
+   * a switch with no accessible name is announced as just "switch".
+   */
+  hideLabel?: boolean;
 }) {
   return (
     <label
       htmlFor={id}
       className={cn(
-        'flex cursor-pointer items-start justify-between gap-4',
+        'flex cursor-pointer items-start gap-4',
+        hideLabel ? 'inline-flex' : 'justify-between',
         disabled && 'cursor-not-allowed opacity-60',
       )}
     >
-      <span className="min-w-0">
+      <span className={cn('min-w-0', hideLabel && 'sr-only')}>
         <span className="block text-sm font-medium">{label}</span>
         {description && <span className="mt-0.5 block text-xs text-muted">{description}</span>}
       </span>
