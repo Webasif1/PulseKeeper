@@ -294,11 +294,13 @@ describe('settings', () => {
       .set('Cookie', cookie)
       .send({ notifications: { onSlow: true } });
 
-    // Replacing the object would silently switch off onDown and onUp.
+    // Replacing the object would silently switch off every preference the
+    // request did not mention.
     expect(response.body.data.settings.notifications).toEqual({
       onDown: true,
       onUp: true,
       onSlow: true,
+      onSslExpiry: true,
     });
   });
 
