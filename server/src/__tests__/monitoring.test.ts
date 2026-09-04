@@ -1,6 +1,7 @@
 import type mongoose from 'mongoose';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as HttpModule from '../services/channels/http.js';
 import type * as HealthCheckService from '../services/healthCheck.service.js';
 import type { HealthCheckOutcome } from '../services/healthCheck.service.js';
 
@@ -17,9 +18,16 @@ vi.mock('../services/healthCheck.service.js', async (importOriginal) => {
   return { ...actual, runHealthCheck };
 });
 
-const { HealthCheck, Incident, MonitorRun, Notification, Settings, Site, User } = await import(
-  '../models/index.js'
-);
+/** Outbound channel delivery is stubbed so nothing leaves the machine. */
+const postJson = vi.hoisted(() => vi.fn());
+
+vi.mock('../services/channels/http.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof HttpModule>();
+  return { ...actual, postJson };
+});
+
+const { HealthCheck, Incident, MonitorRun, Notification, NotificationChannel, Settings, Site, User } =
+  await import('../models/index.js');
 const { checkSite, findDueSites, runMonitoringSweep } = await import(
   '../services/monitoring.service.js'
 );
@@ -75,6 +83,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await clearTestDb();
   runHealthCheck.mockReset();
+  postJson.mockReset().mockResolvedValue(undefined);
 
   const user = await User.create({
     name: 'Asif',
@@ -244,6 +253,66 @@ describe('checkSite', () => {
 
     const notifications = await Notification.find({ siteId: site._id }).sort({ createdAt: 1 });
     expect(notifications.map((entry) => entry.type)).toEqual(['SITE_DOWN', 'SITE_UP']);
+  });
+
+  it('delivers to a configured channel when a site goes down', async () => {
+    await NotificationChannel.create({
+      userId,
+      type: 'WEBHOOK',
+      name: 'Ops endpoint',
+      target: 'https://ops.example.com/hook',
+    });
+
+    const site = await createSite({ failureThreshold: 1 });
+    runHealthCheck.mockResolvedValue(offlineResult());
+
+    await checkSite(await reload(site._id));
+
+    expect(postJson).toHaveBeenCalledOnce();
+    const [target, payload] = postJson.mock.calls[0] ?? [];
+    expect(target).toBe('https://ops.example.com/hook');
+    expect(payload).toMatchObject({ event: 'SITE_DOWN', site: { name: 'Recallix' } });
+  });
+
+  it('skips a disabled channel', async () => {
+    await NotificationChannel.create({
+      userId,
+      type: 'WEBHOOK',
+      name: 'Off',
+      target: 'https://ops.example.com/hook',
+      enabled: false,
+    });
+
+    const site = await createSite({ failureThreshold: 1 });
+    runHealthCheck.mockResolvedValue(offlineResult());
+
+    await checkSite(await reload(site._id));
+
+    expect(postJson).not.toHaveBeenCalled();
+  });
+
+  it('still records the in-app notification when a channel fails', async () => {
+    await NotificationChannel.create({
+      userId,
+      type: 'WEBHOOK',
+      name: 'Broken',
+      target: 'https://ops.example.com/hook',
+    });
+    postJson.mockRejectedValue(new Error('Endpoint returned HTTP 500'));
+
+    const site = await createSite({ failureThreshold: 1 });
+    runHealthCheck.mockResolvedValue(offlineResult());
+
+    await checkSite(await reload(site._id));
+
+    // A broken integration must not lose the notification, and must not fail
+    // the sweep that produced it.
+    expect(await Notification.countDocuments({ type: 'SITE_DOWN' })).toBe(1);
+    expect((await Incident.findOne({ siteId: site._id }))?.status).toBe('ACTIVE');
+
+    const channel = await NotificationChannel.findOne({ name: 'Broken' });
+    expect(channel?.consecutiveFailures).toBe(1);
+    expect(channel?.lastError).toContain('HTTP 500');
   });
 
   it('respects a user who turned recovery notifications off', async () => {
