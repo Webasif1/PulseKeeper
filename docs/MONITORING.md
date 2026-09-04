@@ -104,6 +104,32 @@ MongoDB rather than by service logic alone — a manual check racing the cron sw
 open duplicates for the same outage. When that race happens, the loser reuses the incident the
 winner created.
 
+## TLS certificate expiry
+
+Every https check already completes a TLS handshake, so the certificate is
+sitting on the socket. PulseKeeper reads it there rather than opening a second
+connection for data it already has.
+
+Recorded per site: expiry date, issuer, and days remaining.
+
+Warnings fire at **30, 14, 7, and 1 days remaining**, and at most once per band.
+Crossing 30 warns once; the next warning waits for 14. A daily reminder for a
+month is how people learn to ignore alerts. Renewing the certificate clears the
+record, so the next genuine approach is announced again.
+
+An already-expired certificate is reported as its own event, because visitors
+see a browser security warning — a worse outcome than a slow response.
+
+Across a redirect chain, the certificate from the **first** https hop is kept.
+That is the URL the user configured and is responsible for renewing; a redirect
+to a CDN would otherwise report someone else's certificate as theirs.
+
+Reading the certificate never fails a check. A missing or unparseable one is
+ignored — the site responded, which is what the check was asked to determine.
+
+Users can switch these warnings off independently of outage alerts, since an
+expiring certificate is a different concern from a site being down.
+
 ## Notifications
 
 An opening incident emits `SITE_DOWN`; a resolving one emits `SITE_UP`. Each is delivered to every

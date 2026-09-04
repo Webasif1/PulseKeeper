@@ -8,6 +8,64 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## TLS certificate expiry monitoring
+
+**Date:** 2026-09-05 · **Branch:** `feat/ssl-expiry`
+
+A certificate quietly expiring is a self-inflicted outage that monitoring exists to prevent, and
+it is one of the few failures that is entirely predictable in advance.
+
+### What landed
+
+- Certificate expiry, issuer, and days remaining captured during the existing https check.
+- Warnings at 30, 14, 7, and 1 days remaining, once per band, with `SSL_EXPIRING` and
+  `SSL_EXPIRED` notification types and a dedicated user preference.
+- Certificate status on the site detail page.
+- 12 new tests (377 total).
+
+### Decisions
+
+- **The certificate is read from the connection the check already makes.** Every https check
+  completes a TLS handshake, so the certificate is on the socket. Opening a second connection per
+  site per check for data already in hand would be pure waste.
+- **Warn once per band, not once per check.** Crossing 30 days warns once; the next warning waits
+  for 14. Thirty daily reminders is precisely how people learn to ignore alerts, and an alert that
+  is ignored is worse than no alert.
+- **A renewal clears the record.** Otherwise the *next* genuine approach a year later would pass
+  in silence, having already "warned" at that band.
+- **The first https hop's certificate is kept, not the last.** The configured URL is the one the
+  user owns and must renew; a redirect to a CDN or a marketing host would otherwise report someone
+  else's certificate as theirs.
+- **Reading a certificate never fails a check.** A missing or unparseable one is ignored: the site
+  responded, which is what the check was asked to determine.
+- **Expired gets its own event.** Visitors to a site with an expired certificate see a browser
+  security warning, which is a worse outcome than a slow response and reads differently.
+- **A dedicated `onSslExpiry` preference**, rather than folding these into the outage toggle.
+  TypeScript is what forced the question — the preference map is exhaustive over notification
+  types, so adding two types would not compile until they were assigned a preference. Mapping them
+  to "site down" would have been the quiet option and the wrong one: an expiring certificate is a
+  different concern, and someone who wants outage alerts may not want a monthly renewal reminder.
+
+### Deferred
+
+**Domain expiry** was part of the same roadmap item and is not included. It needs an RDAP or WHOIS
+lookup, which is a third-party request per domain on a separate schedule — a different shape of
+work from reading a certificate already in hand, and better done deliberately than bolted on here.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 377 tests passing. Probed against real hosts over live TLS:
+
+```
+https://example.com    ONLINE   cert: 53d left · SSL Corporation · Wed Oct 28 2026
+https://github.com     ONLINE   cert: 86d left · Sectigo Limited · Mon Nov 30 2026
+```
+
+One existing test failed after the change and deserved to: it pinned the exact shape of the
+notification preferences object, which had gained a field.
+
+---
+
 ## Outbound notification channels
 
 **Date:** 2026-09-04 · **Branch:** `feat/notification-channels`

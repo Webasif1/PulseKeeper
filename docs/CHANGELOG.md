@@ -11,6 +11,11 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ### Added
 
+- TLS certificate expiry monitoring: expiry date, issuer, and days remaining are read from the
+  handshake each https check already performs, shown on the site detail page, and warned about at
+  30, 14, 7, and 1 days remaining — once per threshold, with the record cleared on renewal. An
+  already-expired certificate is reported separately. Controlled by its own notification
+  preference.
 - Outbound notification delivery: Slack, Discord, generic webhook, and email channels,
   configurable per account from Settings with a test-send button. Every webhook URL passes the
   same SSRF guard as a health check, at creation, on change, and again at send time. Destinations
