@@ -8,6 +8,7 @@ import { StatusDistribution } from '@/components/charts/StatusDistribution';
 import { TimeRangeTabs } from '@/components/charts/TimeRangeTabs';
 import { UptimeWindows } from '@/components/charts/UptimeWindows';
 import { AppShell } from '@/components/layout/AppShell';
+import { CertificateStatus } from '@/components/sites/CertificateStatus';
 import { DeleteSiteDialog } from '@/components/sites/DeleteSiteDialog';
 import { SiteFormModal } from '@/components/sites/SiteFormModal';
 import { Button } from '@/components/ui/Button';
@@ -223,6 +224,8 @@ export function SiteDetailPage() {
                 {site.description && (
                   <p className="mt-2 text-sm text-secondary">{site.description}</p>
                 )}
+
+                <CertificateStatus site={site} className="mt-2" />
 
                 <p className="mt-2 text-xs text-muted">
                   {site.monitoringEnabled

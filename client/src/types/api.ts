@@ -28,7 +28,9 @@ export type NotificationType =
   | 'SITE_UP'
   | 'SITE_SLOW'
   | 'INCIDENT_OPENED'
-  | 'INCIDENT_RESOLVED';
+  | 'INCIDENT_RESOLVED'
+  | 'SSL_EXPIRING'
+  | 'SSL_EXPIRED';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -68,6 +70,12 @@ export interface Site {
   consecutiveFailures: number;
   uptimePercentage: number;
   activeIncidentId?: string;
+
+  /** TLS certificate, read from the connection each https check already makes. */
+  sslValidTo?: string;
+  sslIssuer?: string;
+  sslDaysRemaining?: number;
+  sslCheckedAt?: string;
 
   isDemo: boolean;
   createdAt: string;
@@ -118,7 +126,7 @@ export interface Settings {
   defaultSlowThresholdMs: number;
   defaultFailureThreshold: number;
   dataRetentionDays: number;
-  notifications: { onDown: boolean; onUp: boolean; onSlow: boolean };
+  notifications: { onDown: boolean; onUp: boolean; onSlow: boolean; onSslExpiry: boolean };
   theme: ThemePreference;
 }
 

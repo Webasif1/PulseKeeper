@@ -1,4 +1,11 @@
-import { AlertTriangle, CheckCircle2, CircleX, type LucideIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleX,
+  ShieldAlert,
+  ShieldX,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useRelativeTime } from '@/hooks/useRelativeTime';
@@ -15,6 +22,8 @@ const PRESENTATION: Record<
   SITE_UP: { icon: CheckCircle2, tone: 'text-online', background: 'bg-online-soft' },
   INCIDENT_RESOLVED: { icon: CheckCircle2, tone: 'text-online', background: 'bg-online-soft' },
   SITE_SLOW: { icon: AlertTriangle, tone: 'text-slow', background: 'bg-slow-soft' },
+  SSL_EXPIRING: { icon: ShieldAlert, tone: 'text-slow', background: 'bg-slow-soft' },
+  SSL_EXPIRED: { icon: ShieldX, tone: 'text-offline', background: 'bg-offline-soft' },
 };
 
 export function NotificationItem({

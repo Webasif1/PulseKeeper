@@ -199,6 +199,18 @@ export function SettingsPage() {
                   description="Sent when an open incident resolves"
                 />
                 <Switch
+                  id="notify-ssl"
+                  checked={settings.notifications.onSslExpiry}
+                  onChange={(checked) =>
+                    void save(
+                      { notifications: { ...settings.notifications, onSslExpiry: checked } },
+                      'onSslExpiry',
+                    )
+                  }
+                  label="When a TLS certificate is expiring"
+                  description="Warned at 30, 14, 7 and 1 days remaining, once per threshold."
+                />
+                <Switch
                   id="notify-slow"
                   checked={settings.notifications.onSlow}
                   onChange={(checked) =>
