@@ -32,6 +32,20 @@ export interface ISite {
   uptimePercentage: number;
   activeIncidentId?: Types.ObjectId;
 
+  // TLS certificate, read from the connection each https check already makes.
+  sslValidTo?: Date;
+  sslIssuer?: string;
+  sslDaysRemaining?: number;
+  sslCheckedAt?: Date;
+  /**
+   * The warning band already announced, in days.
+   *
+   * Prevents a daily "expires in 29 days" for a month, which is how people
+   * learn to ignore alerts. Reset when a renewed certificate pushes the expiry
+   * back out.
+   */
+  sslWarnedAtDays?: number;
+
   /** Marks generated demo data so it is never mistaken for real monitoring. */
   isDemo: boolean;
 
@@ -119,6 +133,12 @@ const siteSchema = new Schema<ISite, SiteModel>(
     consecutiveFailures: { type: Number, default: 0, min: 0 },
     uptimePercentage: { type: Number, default: 0, min: 0, max: 100 },
     activeIncidentId: { type: Schema.Types.ObjectId, ref: 'Incident' },
+
+    sslValidTo: { type: Date },
+    sslIssuer: { type: String, maxlength: 200 },
+    sslDaysRemaining: { type: Number },
+    sslCheckedAt: { type: Date },
+    sslWarnedAtDays: { type: Number },
 
     isDemo: { type: Boolean, default: false },
   },

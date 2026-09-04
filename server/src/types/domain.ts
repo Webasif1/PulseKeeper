@@ -66,6 +66,10 @@ export const NotificationType = {
   SITE_SLOW: 'SITE_SLOW',
   INCIDENT_OPENED: 'INCIDENT_OPENED',
   INCIDENT_RESOLVED: 'INCIDENT_RESOLVED',
+  /** A TLS certificate is approaching its expiry date. */
+  SSL_EXPIRING: 'SSL_EXPIRING',
+  /** A TLS certificate has already expired — the site is effectively broken. */
+  SSL_EXPIRED: 'SSL_EXPIRED',
 } as const;
 
 export type NotificationTypeValue = (typeof NotificationType)[keyof typeof NotificationType];

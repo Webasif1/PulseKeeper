@@ -1,5 +1,6 @@
 import http from 'node:http';
 import https from 'node:https';
+import type { TLSSocket } from 'node:tls';
 
 import { env } from '../config/env.js';
 import { CheckErrorType, SiteStatus, type CheckErrorTypeValue, type SiteStatusValue } from '../types/domain.js';
@@ -18,6 +19,21 @@ import { createGuardedLookup, assertRedirectAllowed, assertUrlAllowed } from '..
  *    `fetch` follows them without asking.
  */
 
+/**
+ * TLS certificate details, read from the connection the check already makes.
+ *
+ * Free information: the handshake happens anyway, so the certificate is sitting
+ * on the socket. Fetching it separately would mean a second connection per
+ * site per check for data already in hand.
+ */
+export interface TlsCertificateInfo {
+  validTo: Date;
+  validFrom?: Date;
+  issuer?: string;
+  subject?: string;
+  daysRemaining: number;
+}
+
 export interface HealthCheckOutcome {
   success: boolean;
   status: SiteStatusValue;
@@ -28,6 +44,8 @@ export interface HealthCheckOutcome {
   /** Final URL after redirects, when it differs from the one requested. */
   finalUrl?: string;
   redirects: number;
+  /** Present only for https checks that completed a handshake. */
+  tls?: TlsCertificateInfo;
 }
 
 export interface HealthCheckOptions {
@@ -120,6 +138,52 @@ interface SingleRequestResult {
   statusCode: number;
   location?: string;
   elapsedMs: number;
+  tls?: TlsCertificateInfo;
+}
+
+/** Whole days remaining, floored — 12 hours left is "0 days", not "1". */
+export function daysUntil(date: Date, now: Date = new Date()): number {
+  return Math.floor((date.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * Read the peer certificate off a TLS socket.
+ *
+ * Returns undefined rather than throwing: a missing or unparseable certificate
+ * must never turn a successful health check into a failure. The site responded;
+ * that is what the check was asked to determine.
+ */
+function readCertificate(socket: TLSSocket | undefined): TlsCertificateInfo | undefined {
+  try {
+    if (!socket || typeof socket.getPeerCertificate !== 'function') return undefined;
+
+    const certificate = socket.getPeerCertificate();
+    if (!certificate || !certificate.valid_to) return undefined;
+
+    const validTo = new Date(certificate.valid_to);
+    if (Number.isNaN(validTo.getTime())) return undefined;
+
+    const validFrom = new Date(certificate.valid_from);
+
+    // Node types these as string | string[]: a certificate may carry repeated
+    // attributes, and the array form is what it gives back when it does.
+    const firstOf = (value: string | string[] | undefined): string | undefined =>
+      Array.isArray(value) ? value[0] : value;
+
+    // CN is the human-readable name; O is the organisation issuing it.
+    const issuer = firstOf(certificate.issuer?.O) ?? firstOf(certificate.issuer?.CN);
+    const subject = firstOf(certificate.subject?.CN);
+
+    return {
+      validTo,
+      ...(Number.isNaN(validFrom.getTime()) ? {} : { validFrom }),
+      ...(issuer ? { issuer } : {}),
+      ...(subject ? { subject } : {}),
+      daysRemaining: daysUntil(validTo),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -159,6 +223,13 @@ function performRequest(url: URL, timeoutMs: number): Promise<SingleRequestResul
 
         const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
 
+        // Read before destroying: the certificate lives on the socket, and
+        // destroying the response tears it down.
+        const tls =
+          url.protocol === 'https:'
+            ? readCertificate(response.socket as TLSSocket | undefined)
+            : undefined;
+
         // Headers are all that is needed; free the socket rather than
         // downloading a body nobody reads.
         response.destroy();
@@ -167,6 +238,7 @@ function performRequest(url: URL, timeoutMs: number): Promise<SingleRequestResul
           statusCode: response.statusCode ?? 0,
           location: response.headers.location,
           elapsedMs: Math.round(elapsedMs),
+          ...(tls ? { tls } : {}),
         });
       },
     );
@@ -221,6 +293,15 @@ export async function runHealthCheck(
 
   let totalElapsed = 0;
   let redirects = 0;
+  /**
+   * The certificate from the first HTTPS hop.
+   *
+   * Kept rather than overwritten by later hops, because the URL the user
+   * configured is the one they own and are responsible for renewing. A redirect
+   * to a CDN or a marketing host would otherwise report someone else's
+   * certificate as theirs.
+   */
+  let tlsInfo: TlsCertificateInfo | undefined;
 
   for (;;) {
     let result: SingleRequestResult;
@@ -256,6 +337,7 @@ export async function runHealthCheck(
     }
 
     totalElapsed += result.elapsedMs;
+    tlsInfo ??= result.tls;
 
     const isRedirect =
       result.statusCode >= 300 && result.statusCode < 400 && Boolean(result.location);
@@ -272,6 +354,7 @@ export async function runHealthCheck(
         ...(errorMessage ? { errorMessage } : {}),
         ...(redirects > 0 ? { finalUrl: current.toString() } : {}),
         redirects,
+        ...(tlsInfo ? { tls: tlsInfo } : {}),
       };
     }
 

@@ -22,6 +22,16 @@ export const MONITORING_DEFAULTS = {
   retentionDays: 30,
 } as const;
 
+/**
+ * When to warn about an expiring TLS certificate, in days remaining.
+ *
+ * Descending, and warned at most once per band: a certificate quietly expiring
+ * is a self-inflicted outage that monitoring should have caught, but a daily
+ * reminder for thirty days is how people learn to ignore alerts. 30 gives time
+ * to renew, 14 is a nudge, 7 is urgent, 1 is an emergency.
+ */
+export const SSL_WARNING_DAYS = [30, 14, 7, 1] as const;
+
 /** Bounds enforced by both the Zod validators and the Mongoose schemas. */
 export const MONITORING_LIMITS = {
   timeoutSeconds: { min: 1, max: 60 },
