@@ -16,6 +16,11 @@ export type { IMonitorRun, MonitorRunDocument } from './MonitorRun.js';
 export { Notification } from './Notification.js';
 export type { INotification, NotificationDocument } from './Notification.js';
 
+export { NotificationChannel } from './NotificationChannel.js';
+export type {
+  INotificationChannel,
+  NotificationChannelDocument,
+} from './NotificationChannel.js';
 export { Settings } from './Settings.js';
 export type { ISettings, SettingsDocument } from './Settings.js';
 

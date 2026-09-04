@@ -71,6 +71,23 @@ export const NotificationType = {
 export type NotificationTypeValue = (typeof NotificationType)[keyof typeof NotificationType];
 export const NOTIFICATION_TYPES = Object.values(NotificationType);
 
+/**
+ * Where a notification can be delivered, beyond the in-app feed.
+ *
+ * Slack and Discord are separate types rather than one "webhook" because each
+ * expects its own payload shape — Slack wants `blocks`, Discord wants `embeds`,
+ * and a generic endpoint wants neither.
+ */
+export const ChannelType = {
+  SLACK: 'SLACK',
+  DISCORD: 'DISCORD',
+  WEBHOOK: 'WEBHOOK',
+  EMAIL: 'EMAIL',
+} as const;
+
+export type ChannelTypeValue = (typeof ChannelType)[keyof typeof ChannelType];
+export const CHANNEL_TYPES = Object.values(ChannelType);
+
 export const ThemePreference = {
   LIGHT: 'light',
   DARK: 'dark',

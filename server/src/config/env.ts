@@ -65,6 +65,26 @@ const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
 
+    /**
+     * SMTP, for email notification channels.
+     *
+     * All optional. Email channels are simply unavailable when SMTP is not
+     * configured, which is the right default for a self-hosted tool that many
+     * people will run without a mail relay.
+     */
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_FROM: z.string().min(1).optional(),
+    SMTP_SECURE: booleanFromString.default('false'),
+
+    /**
+     * Public URL of the dashboard, used to build links inside outbound
+     * notifications. Falls back to the first allowed origin.
+     */
+    DASHBOARD_URL: z.string().optional(),
+
     /** Express `trust proxy` value: a hop count, or false when not proxied. */
     TRUST_PROXY: z
       .string()
@@ -128,6 +148,15 @@ export const env = {
   isProduction: parsed.NODE_ENV === 'production',
   isDevelopment: parsed.NODE_ENV === 'development',
   isTest: parsed.NODE_ENV === 'test',
+
+  /** Email channels are offered only when there is a relay to send through. */
+  isSmtpConfigured: Boolean(parsed.SMTP_HOST && parsed.SMTP_FROM),
+
+  /** Where notification links point. */
+  dashboardUrl:
+    parsed.DASHBOARD_URL?.replace(/\/$/, '') ??
+    parsed.CLIENT_URL.split(',')[0]?.trim().replace(/\/$/, '') ??
+    '',
 } as const;
 
 export type Env = typeof env;
