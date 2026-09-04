@@ -38,6 +38,12 @@ export interface PublicSite {
   uptimePercentage: number;
   activeIncidentId?: string;
 
+  /** TLS certificate, from the connection each https check already makes. */
+  sslValidTo?: Date;
+  sslIssuer?: string;
+  sslDaysRemaining?: number;
+  sslCheckedAt?: Date;
+
   isDemo: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -80,6 +86,11 @@ export function toPublicSite(site: RawSite): PublicSite {
     consecutiveFailures: site.consecutiveFailures,
     uptimePercentage: site.uptimePercentage,
     ...(site.activeIncidentId ? { activeIncidentId: site.activeIncidentId.toString() } : {}),
+
+    ...(site.sslValidTo ? { sslValidTo: site.sslValidTo } : {}),
+    ...(site.sslIssuer ? { sslIssuer: site.sslIssuer } : {}),
+    ...(site.sslDaysRemaining !== undefined ? { sslDaysRemaining: site.sslDaysRemaining } : {}),
+    ...(site.sslCheckedAt ? { sslCheckedAt: site.sslCheckedAt } : {}),
 
     isDemo: site.isDemo,
     createdAt: site.createdAt,

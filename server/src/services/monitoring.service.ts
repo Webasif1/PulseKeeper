@@ -7,6 +7,7 @@ import { runWithConcurrency } from '../utils/concurrency.js';
 import { createLogger } from '../utils/logger.js';
 import { runHealthCheck } from './healthCheck.service.js';
 import { handleFailedCheck, handleSuccessfulCheck } from './incident.service.js';
+import { handleCertificate } from './ssl.service.js';
 
 const log = createLogger('monitor');
 
@@ -116,10 +117,15 @@ export async function checkSite(
 
     const uptimePercentage = await calculateRecentUptime(site._id);
 
+    // Folded into the single site update below rather than written separately:
+    // the certificate came from the connection this check already made.
+    const sslUpdate = outcome.tls ? await handleCertificate(site, outcome.tls) : {};
+
     await Site.updateOne(
       { _id: site._id },
       {
         $set: {
+          ...sslUpdate,
           currentStatus: outcome.status,
           currentResponseTime: outcome.responseTimeMs ?? null,
           currentStatusCode: outcome.statusCode ?? null,

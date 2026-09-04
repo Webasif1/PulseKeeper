@@ -51,6 +51,7 @@ export const updateSettingsSchema = z
         onDown: z.boolean(),
         onUp: z.boolean(),
         onSlow: z.boolean(),
+        onSslExpiry: z.boolean(),
       })
       .partial(),
     theme: z.enum(THEME_PREFERENCES as unknown as [string, ...string[]]),

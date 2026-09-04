@@ -24,12 +24,17 @@ export interface NotificationEvent {
 }
 
 /** Which user preference governs each notification type. */
-const PREFERENCE_FOR_TYPE: Record<NotificationTypeValue, 'onDown' | 'onUp' | 'onSlow'> = {
+const PREFERENCE_FOR_TYPE: Record<
+  NotificationTypeValue,
+  'onDown' | 'onUp' | 'onSlow' | 'onSslExpiry'
+> = {
   [NotificationType.SITE_DOWN]: 'onDown',
   [NotificationType.INCIDENT_OPENED]: 'onDown',
   [NotificationType.SITE_UP]: 'onUp',
   [NotificationType.INCIDENT_RESOLVED]: 'onUp',
   [NotificationType.SITE_SLOW]: 'onSlow',
+  [NotificationType.SSL_EXPIRING]: 'onSslExpiry',
+  [NotificationType.SSL_EXPIRED]: 'onSslExpiry',
 };
 
 const RECOVERY_TYPES = new Set<NotificationTypeValue>([

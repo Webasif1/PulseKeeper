@@ -29,6 +29,8 @@ export interface ISettings {
     onDown: boolean;
     onUp: boolean;
     onSlow: boolean;
+    /** Certificate expiry is a distinct concern from an outage. */
+    onSslExpiry: boolean;
   };
 
   theme: ThemePreferenceValue;
@@ -84,6 +86,9 @@ const settingsSchema = new Schema<ISettings, SettingsModel>(
       onDown: { type: Boolean, default: true },
       onUp: { type: Boolean, default: true },
       onSlow: { type: Boolean, default: false },
+      // On by default: an expiring certificate is a self-inflicted outage
+      // that monitoring exists to prevent.
+      onSslExpiry: { type: Boolean, default: true },
     },
 
     theme: {

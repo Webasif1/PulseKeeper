@@ -8,7 +8,7 @@ export interface PublicSettings {
   defaultSlowThresholdMs: number;
   defaultFailureThreshold: number;
   dataRetentionDays: number;
-  notifications: { onDown: boolean; onUp: boolean; onSlow: boolean };
+  notifications: { onDown: boolean; onUp: boolean; onSlow: boolean; onSslExpiry: boolean };
   theme: ThemePreferenceValue;
 }
 
