@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import authRoutes from './auth.routes.js';
+import channelRoutes from './channel.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import healthRoutes from './health.routes.js';
 import incidentRoutes from './incident.routes.js';
@@ -21,6 +22,7 @@ router.use('/sites', siteRoutes);
 router.use('/incidents', incidentRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/channels', channelRoutes);
 router.use('/monitor', monitorRoutes);
 
 // /api/dashboard/stats and /api/dashboard/analytics. The analytics page reads
