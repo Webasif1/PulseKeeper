@@ -9,7 +9,14 @@ Day-to-day build notes and the reasoning behind each phase live in [DEVLOG.md](D
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Outbound notification delivery: Slack, Discord, generic webhook, and email channels,
+  configurable per account from Settings with a test-send button. Every webhook URL passes the
+  same SSRF guard as a health check, at creation, on change, and again at send time. Destinations
+  are stored as secrets and never returned by the API. A channel is disabled automatically after
+  repeated delivery failures rather than retried indefinitely. Email requires SMTP to be
+  configured on the server and is hidden when it is not.
 
 ## [0.1.0] — 2026-09-04
 

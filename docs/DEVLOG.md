@@ -8,6 +8,80 @@ see [SPEC.md](SPEC.md).
 
 ---
 
+## Outbound notification channels
+
+**Date:** 2026-09-04 · **Branch:** `feat/notification-channels`
+
+The first feature after v0.1.0. Until now an outage only reached you if the dashboard happened to
+be open, which is the wrong shape for a monitoring tool.
+
+### What landed
+
+- A `NotificationChannel` model, and four adapters behind the `ChannelAdapter` interface: Slack,
+  Discord, generic webhook, and email over SMTP.
+- Delivery wired into the existing dispatcher, so incidents opening and resolving now fan out.
+- `/api/channels` CRUD plus a test-send endpoint, and a Settings section to manage them.
+- 27 new tests (365 total).
+
+### Decisions
+
+- **Webhook URLs go through the same SSRF guard as health checks**, at creation, whenever the
+  target changes, and again at send time. A webhook URL is user input the server later fetches, so
+  unguarded it would be a way to reach internal services *and* have the response delivered
+  somewhere the attacker controls — strictly worse than the health-check case. Nine tests cover
+  this, and they run against the real guard rather than a mock, because a mocked guard could not
+  prove anything.
+- **`https` is required for webhooks.** The URL is a bearer credential: anyone holding a Slack
+  incoming-webhook URL can post to that channel, so sending it over plain HTTP would expose it to
+  everything on the path.
+- **The destination is never returned by the API.** It is `select: false` on the schema, and
+  responses carry only a redacted `targetPreview` — enough to tell two Slack webhooks apart,
+  useless to anyone reading a proxy log or a browser extension. On edit, an omitted target means
+  "keep the current one", which is why the edit form starts blank rather than pre-filled.
+- **Slack and Discord are separate types, not one "webhook".** Each expects its own payload shape,
+  and a Slack message built from Block Kit is far more readable in a busy channel than a line of
+  text — which is what decides whether people mute the channel.
+- **A channel is disabled after 10 consecutive failures.** A webhook whose Slack app was
+  uninstalled would otherwise generate an outbound request and a log line for every alert forever.
+  Re-enabling resets the counter, and changing the target clears the failure history, since the old
+  errors describe a different destination.
+- **Email is hidden when SMTP is not configured**, rather than offered and then rejected. A
+  self-hosted tool run by one developer often has no relay, and a channel that silently fails is
+  worse than one that was never offered.
+- **The test endpoint reports failures; the dispatch path never does.** Someone pressing "Send
+  test" is asking whether it works, so the error is the answer. During a sweep the opposite holds:
+  a broken integration must not fail the monitoring run, so failures are recorded against the
+  channel and the sweep continues.
+- **The in-app notification is written before any channel is attempted**, so the dashboard stays
+  accurate even when every outbound channel is broken.
+
+### Fixed during verification
+
+- **Delivery errors captured HTML.** A real test send to `https://example.com/hooks/pulsekeeper`
+  returned 405, and the channel's error field filled with a doctype, a stylesheet, and part of a
+  page body. Slack and Discord explain refusals usefully in the body (`no_service`,
+  `invalid_webhook`), but an HTML error page does not, so the body is now kept only for JSON and
+  plain-text responses and collapsed to `Endpoint returned HTTP 405` otherwise.
+- **A switch with an empty label.** The channel row's enable toggle was given `label=""`, which
+  leaves it announced as just "switch". `Switch` now takes `hideLabel`, which renders a real label
+  for screen readers while keeping the row visually compact.
+
+### Verified
+
+`typecheck`, `lint`, `build` clean; 365 tests passing.
+
+Live against the running API: a webhook pointing at `169.254.169.254` was refused as a cloud
+metadata endpoint, one pointing at `127.0.0.1` as a reserved address, a plain-HTTP target for
+requiring https, and an email channel because SMTP is unconfigured. A valid public https webhook
+was accepted and came back as `example.com/…eper` with no trace of the full URL anywhere in the
+response. A real test send completed the entire outbound path — DNS, guard, TCP, TLS, POST,
+response — and recorded `Endpoint returned HTTP 405` against the channel.
+
+Delivery could not be tested against a local receiver, because the guard correctly refuses
+loopback. That is the guard working, not a gap in coverage.
+
+---
+
 ## Phase 10 — Accessibility, deployment, and v0.1.0
 
 **Date:** 2026-09-04 · **Branch:** `chore/polish-docs-deploy`

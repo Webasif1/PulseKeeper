@@ -181,6 +181,61 @@ The list response includes `unreadCount` alongside `items`, and that count is **
 header badge shows total unread regardless of the panel's current filter, so the client never
 needs a second request.
 
+## Notification channels
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/channels` | List channels, plus `emailAvailable` |
+| `POST` | `/channels` | Add one |
+| `PATCH` | `/channels/:id` | Rename, change destination, enable or disable |
+| `DELETE` | `/channels/:id` | Remove one |
+| `POST` | `/channels/:id/test` | Send a test message |
+
+Types: `SLACK`, `DISCORD`, `WEBHOOK`, `EMAIL`. Ten channels per account.
+
+```bash
+curl -X POST .../api/channels -b cookies.txt -H 'Content-Type: application/json' \
+  -d '{"type":"SLACK","name":"Team Slack","target":"https://hooks.slack.com/services/T0/B0/xxx"}'
+```
+
+**The destination is never returned.** A webhook URL is a bearer credential —
+anyone holding it can post to that channel — so responses carry only a
+`targetPreview` such as `hooks.slack.com/…wxyz`, enough to tell two channels apart
+and useless to anyone who intercepts it. On edit, omitting `target` keeps the
+stored one.
+
+Every webhook URL passes the **SSRF guard** at creation, whenever it changes, and
+again at send time — the same guard health checks use. A target resolving to
+loopback, a private range, or a cloud metadata endpoint is refused, and `https` is
+required because the URL is a secret in transit. See
+[SECURITY-SSRF.md](SECURITY-SSRF.md).
+
+`EMAIL` is rejected unless the server has SMTP configured; `emailAvailable` on the
+list response says whether to offer it.
+
+`POST /channels/:id/test` reports failures rather than swallowing them — the point
+of the button is to find out. Rate limited to 10/minute alongside manual checks.
+
+### Generic webhook payload
+
+Stable and documented, because whatever receives it was written by whoever
+configured the channel. Fields may be added; renaming or removing one is breaking.
+
+```jsonc
+{
+  "event": "SITE_DOWN",
+  "title": "Movie Spark is down",
+  "message": "Server returned HTTP 503",
+  "site": { "name": "Movie Spark", "url": "https://moviespark.example.com" },
+  "occurredAt": "2026-09-04T15:41:04.200Z",
+  "source": "pulsekeeper"
+}
+```
+
+Delivery never blocks or fails a monitoring sweep: each channel is attempted
+independently, failures are recorded against the channel, and a channel is
+disabled automatically after 10 consecutive failures rather than retried forever.
+
 ## Settings
 
 | Method | Path | Description |
